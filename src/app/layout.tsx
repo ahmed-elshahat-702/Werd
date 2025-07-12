@@ -4,9 +4,9 @@ import {
   // Inter,
   Amiri,
 } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
 // const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });

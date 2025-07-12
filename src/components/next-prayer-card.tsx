@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion, Variants } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
@@ -34,6 +35,7 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
   const [prayerName, setPrayerName] = useState<string | null>(null);
   const [prayerTime, setPrayerTime] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
+  const [isHandling, setIsHandling] = useState(true);
 
   const date = new Date();
   const formattedDate = formatDate(date);
@@ -93,6 +95,8 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
         }
       } catch (error) {
         console.error("خطأ أثناء تحميل أوقات الصلاة:", error);
+      } finally {
+        setIsHandling(false);
       }
     };
 
@@ -122,7 +126,13 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {prayerName && prayerTime && countdown ? (
+          {isHandling ? (
+            <div className="space-y-3 text-right">
+              <Skeleton className="h-6 w-1/3 rounded-lg" />
+              <Skeleton className="h-5 w-1/4 rounded-lg" />
+              <Skeleton className="h-6 w-1/2 rounded-lg" />
+            </div>
+          ) : prayerName && prayerTime && countdown ? (
             <div className="space-y-2 text-right">
               <div className="text-2xl font-bold">{prayerName}</div>
               <div className="text-lg text-primary-foreground/80">
@@ -133,7 +143,9 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
               </Badge>
             </div>
           ) : (
-            <div className="text-right">جاري تحميل أوقات الصلاة...</div>
+            <div className="text-right text-sm">
+              لم يتم العثور على وقت الصلاة.
+            </div>
           )}
         </CardContent>
       </Card>

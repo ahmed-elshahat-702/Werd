@@ -5,11 +5,11 @@ const Logo = () => {
   return (
     <div className="flex items-center gap-2 px-4 py-2">
       <div className="">
-        <Image src="/logo.png" alt="Logo" width={20} height={20} />
+        <Image src="/logo.png" alt="Logo" width={30} height={30} />
       </div>
       <div className="flex flex-col items-start text-sm leading-tight">
-        <span className="truncate font-semibold">Werd</span>
-        <span className="truncate text-xs arabic-text">وِرد</span>
+        <span className="truncate font-semibold text-lg">Werd</span>
+        <span className="truncate text-lg arabic-text">وِرد</span>
       </div>
     </div>
   );

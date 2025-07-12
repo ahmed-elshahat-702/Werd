@@ -5,12 +5,11 @@ import {
   BookOpen,
   Calendar,
   Home,
-  Moon,
-  Sun,
   User,
   Clock,
   Heart,
   Bookmark,
+  Settings,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,9 +27,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/lib/store";
-import Logo from "./layout/logo";
+import Logo from "./logo";
+import ModeToggler from "./mode-toggler";
+import { Separator } from "../ui/separator";
 
 const menuItems = [
   {
@@ -75,17 +74,10 @@ const menuItems = [
     icon: Calendar,
     arabic: "التقويم",
   },
-  {
-    title: "Profile",
-    url: "/profile",
-    icon: User,
-    arabic: "الملف الشخصي",
-  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useAppStore();
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -116,20 +108,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem className="space-y-2 mb-2">
+            <ModeToggler />
+            <Separator />
+          </SidebarMenuItem>
           <SidebarMenuItem>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="w-full justify-start"
-            >
-              {theme === "light" ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
-              <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
-            </Button>
+            <SidebarMenuButton asChild isActive={pathname === "profile"}>
+              <Link href={"/profile"}>
+                <User />
+                <span>Profile</span>
+                <span className="ml-auto text-xs arabic-text text-muted-foreground">
+                  الملف الشخصي
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === "settings"}>
+              <Link href={"/settings"}>
+                <Settings />
+                <span>Settings</span>
+                <span className="ml-auto text-xs arabic-text text-muted-foreground">
+                  الإعدادات
+                </span>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

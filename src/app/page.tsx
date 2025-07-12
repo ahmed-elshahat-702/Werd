@@ -1,6 +1,6 @@
 "use client";
 
-import DailyHadeethCard from "@/components/daily-hadeeth-card";
+import DailyHadithCard from "@/components/daily-hadith-card";
 import DailyVerseCard from "@/components/daily-verse-card";
 import GreetingCard from "@/components/greeting-card";
 import NextPrayerCard from "@/components/next-prayer-card";
@@ -61,7 +61,7 @@ export default function Dashboard() {
           </div>
 
           {/* Daily Hadith */}
-          <DailyHadeethCard itemVariants={itemVariants} />
+          <DailyHadithCard itemVariants={itemVariants} />
 
           {/* Quick Actions */}
           <QuickActionsCard itemVariants={itemVariants} />

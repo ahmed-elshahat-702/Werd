@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
 import { motion, Variants } from "framer-motion";
 import { BookOpen } from "lucide-react";
@@ -14,6 +15,7 @@ interface DailyVerse {
 
 const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
   const [dailyVerse, setDailyVerse] = useState<DailyVerse | null>(null);
+  const [isHandling, setIsHandling] = useState(true);
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -25,36 +27,42 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
       let surahId = dailyVerseState.surahId;
       let ayahNumber = dailyVerseState.ayahNumber;
 
-      // لو يوم جديد، نجيب الآية اللي بعدها
-      if (isNewDay) {
-        // Fetch عدد الآيات في السورة الحالية
-        const res = await fetch(`http://api.alquran.cloud/v1/surah/${surahId}`);
-        const data = await res.json();
-        const totalAyat = data.data.numberOfAyahs;
+      try {
+        setIsHandling(true);
 
-        if (ayahNumber >= totalAyat) {
-          surahId += 1;
-          ayahNumber = 1;
-        } else {
-          ayahNumber += 1;
+        if (isNewDay) {
+          const res = await fetch(
+            `http://api.alquran.cloud/v1/surah/${surahId}`
+          );
+          const data = await res.json();
+          const totalAyat = data.data.numberOfAyahs;
+
+          if (ayahNumber >= totalAyat) {
+            surahId += 1;
+            ayahNumber = 1;
+          } else {
+            ayahNumber += 1;
+          }
+
+          updateDailyVerseState(today, surahId, ayahNumber);
         }
 
-        // حدّث الستور
-        updateDailyVerseState(today, surahId, ayahNumber);
-      }
+        const response = await fetch(
+          `https://api.alquran.cloud/v1/ayah/${surahId}:${ayahNumber}`
+        );
+        const verseData = await response.json();
 
-      // بعد التحديث أو لو مش يوم جديد، fetch الآية من API
-      const response = await fetch(
-        `https://api.alquran.cloud/v1/ayah/${surahId}:${ayahNumber}`
-      );
-      const verseData = await response.json();
-
-      if (verseData.data) {
-        setDailyVerse({
-          text: verseData.data.text,
-          surah: verseData.data.surah,
-          numberInSurah: verseData.data.numberInSurah,
-        });
+        if (verseData.data) {
+          setDailyVerse({
+            text: verseData.data.text,
+            surah: verseData.data.surah,
+            numberInSurah: verseData.data.numberInSurah,
+          });
+        }
+      } catch (error) {
+        console.error("فشل تحميل الآية:", error);
+      } finally {
+        setIsHandling(false);
       }
     };
 
@@ -71,7 +79,12 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {dailyVerse ? (
+          {isHandling ? (
+            <div className="space-y-3 text-right">
+              <Skeleton className="h-6 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4 rounded-lg" />
+            </div>
+          ) : dailyVerse ? (
             <div className="space-y-3 text-right">
               <div className="arabic-text text-lg leading-relaxed">
                 {dailyVerse.text}
@@ -81,7 +94,9 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
               </div>
             </div>
           ) : (
-            <div className="text-right arabic-text">جاري تحميل الآية...</div>
+            <div className="text-right arabic-text text-red-500">
+              لا يوجد آية متاحة حالياً.
+            </div>
           )}
         </CardContent>
       </Card>

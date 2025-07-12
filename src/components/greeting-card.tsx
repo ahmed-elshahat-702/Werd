@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
 import { motion, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ const GreetingCard = ({ itemVariants }: { itemVariants: Variants }) => {
   const { user } = useAppStore();
   const [hijriDate, setHijriDate] = useState("");
   const [gregorianDate, setGregorianDate] = useState("");
+  const [isHandling, setIsHandling] = useState(true);
 
   useEffect(() => {
     const now = new Date();
@@ -46,6 +48,8 @@ const GreetingCard = ({ itemVariants }: { itemVariants: Variants }) => {
       } catch (error) {
         console.error(error);
         setHijriDate("١ محرم ١٤٤٦");
+      } finally {
+        setIsHandling(false);
       }
     };
 
@@ -59,11 +63,20 @@ const GreetingCard = ({ itemVariants }: { itemVariants: Variants }) => {
           <CardTitle className="text-2xl arabic-text">
             السلام عليكم، {user.name}
           </CardTitle>
-          <CardDescription className="space-y-1">
-            <div className="arabic-text">{gregorianDate}</div>
-            <div className="arabic-text text-emerald-600 dark:text-emerald-400">
-              {hijriDate}
-            </div>
+          <CardDescription className="space-y-1 mt-2">
+            {isHandling ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-2/3 rounded-lg" />
+                <Skeleton className="h-4 w-1/3 rounded-lg" />
+              </div>
+            ) : (
+              <>
+                <div className="arabic-text">{gregorianDate}</div>
+                <div className="arabic-text text-emerald-600 dark:text-emerald-400">
+                  {hijriDate}
+                </div>
+              </>
+            )}
           </CardDescription>
         </CardHeader>
       </Card>

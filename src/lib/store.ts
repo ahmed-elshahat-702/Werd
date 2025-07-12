@@ -25,8 +25,11 @@ interface AppState {
   selectedSurah: Surah | null;
   selectedZikr: string;
   bookmarks: Bookmark[];
-  theme: "light" | "dark";
   completedAzkar: string[];
+  isLoading: boolean;
+  setIsLoading: (state: boolean) => void;
+  isHandling: boolean;
+  setIsHandling: (state: boolean) => void;
   misbaha: {
     count: number;
     customZikr: string;
@@ -49,7 +52,6 @@ interface AppState {
   setZikr: (zikr: string) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
-  toggleTheme: () => void;
   markAzkarComplete: (azkarId: string) => void;
   incrementMisbaha: () => void;
   resetMisbaha: () => void;
@@ -69,6 +71,10 @@ export const useAppStore = create<AppState>()(
       bookmarks: [],
       theme: "light",
       completedAzkar: [],
+      isLoading: false,
+      setIsLoading: (state) => set({ isLoading: state }),
+      isHandling: false,
+      setIsHandling: (state) => set({ isHandling: state }),
       misbaha: {
         count: 0,
         customZikr: "سبحان الله",
@@ -104,10 +110,6 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           bookmarks: state.bookmarks.filter((b) => b.id !== id),
         })),
-      toggleTheme: () =>
-        set((state) => ({
-          theme: state.theme === "light" ? "dark" : "light",
-        })),
       markAzkarComplete: (azkarId) =>
         set((state) => ({
           completedAzkar: [...state.completedAzkar, azkarId],
@@ -142,6 +144,12 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "werd-storage",
+      partialize: (state) => ({
+        user: state.user,
+        bookmarks: state.bookmarks,
+        completedAzkar: state.completedAzkar,
+        dailyVerseState: state.dailyVerseState,
+      }),
     }
   )
 );
