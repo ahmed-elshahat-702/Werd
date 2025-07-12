@@ -141,7 +141,7 @@ export const useAppStore = create<AppState>()(
         })),
     }),
     {
-      name: "noor-storage",
+      name: "werd-storage",
     }
   )
 );

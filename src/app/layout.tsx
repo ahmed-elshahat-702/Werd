@@ -17,7 +17,7 @@ const amiri = Amiri({
 });
 
 export const metadata: Metadata = {
-  title: "Noor - Islamic Dashboard",
+  title: "werd - Islamic Dashboard",
   description: "Your spiritual companion for daily Islamic practices",
   generator: "v0.dev",
 };
