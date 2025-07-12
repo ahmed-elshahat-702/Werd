@@ -1,58 +1,90 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { RotateCcw, Save, Clock } from "lucide-react"
-import { useAppStore } from "@/lib/store"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { RotateCcw, Save, Clock } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 
 const commonZikr = [
-  { arabic: "سبحان الله", transliteration: "Subhan Allah", translation: "Glory be to Allah" },
-  { arabic: "الحمد لله", transliteration: "Alhamdulillah", translation: "Praise be to Allah" },
-  { arabic: "الله أكبر", transliteration: "Allahu Akbar", translation: "Allah is Greatest" },
-  { arabic: "لا إله إلا الله", transliteration: "La ilaha illa Allah", translation: "There is no god but Allah" },
-  { arabic: "استغفر الله", transliteration: "Astaghfirullah", translation: "I seek forgiveness from Allah" },
+  {
+    arabic: "سبحان الله",
+    transliteration: "Subhan Allah",
+    translation: "Glory be to Allah",
+  },
+  {
+    arabic: "الحمد لله",
+    transliteration: "Alhamdulillah",
+    translation: "Praise be to Allah",
+  },
+  {
+    arabic: "الله أكبر",
+    transliteration: "Allahu Akbar",
+    translation: "Allah is Greatest",
+  },
+  {
+    arabic: "لا إله إلا الله",
+    transliteration: "La ilaha illa Allah",
+    translation: "There is no god but Allah",
+  },
+  {
+    arabic: "استغفر الله",
+    transliteration: "Astaghfirullah",
+    translation: "I seek forgiveness from Allah",
+  },
   {
     arabic: "لا حول ولا قوة إلا بالله",
     transliteration: "La hawla wa la quwwata illa billah",
     translation: "There is no power except with Allah",
   },
-]
+];
 
 export default function MisbahaPage() {
-  const { misbaha, incrementMisbaha, resetMisbaha, setCustomZikr, saveMisbahaSession } = useAppStore()
+  const {
+    misbaha,
+    incrementMisbaha,
+    resetMisbaha,
+    setCustomZikr,
+    saveMisbahaSession,
+  } = useAppStore();
 
-  const [selectedZikr, setSelectedZikr] = useState(commonZikr[0])
-  const [customZikrInput, setCustomZikrInput] = useState("")
+  const [selectedZikr, setSelectedZikr] = useState(commonZikr[0]);
+  const [customZikrInput, setCustomZikrInput] = useState("");
 
   useEffect(() => {
     // Vibration feedback on mobile
     if ("vibrate" in navigator && misbaha.count > 0) {
-      navigator.vibrate(50)
+      navigator.vibrate(50);
     }
-  }, [misbaha.count])
+  }, [misbaha.count]);
 
   const handleIncrement = () => {
-    incrementMisbaha()
-  }
+    incrementMisbaha();
+  };
 
   const handleReset = () => {
-    resetMisbaha()
-  }
+    resetMisbaha();
+  };
 
   const handleSaveSession = () => {
-    saveMisbahaSession()
-  }
+    saveMisbahaSession();
+  };
 
   const handleZikrSelect = (zikr: (typeof commonZikr)[0]) => {
-    setSelectedZikr(zikr)
-    setCustomZikr(zikr.arabic)
-  }
+    setSelectedZikr(zikr);
+    setCustomZikr(zikr.arabic);
+  };
 
   const handleCustomZikrSubmit = () => {
     if (customZikrInput.trim()) {
@@ -60,18 +92,18 @@ export default function MisbahaPage() {
         arabic: customZikrInput,
         transliteration: "Custom Zikr",
         translation: "Custom remembrance",
-      }
-      setSelectedZikr(customZikr)
-      setCustomZikr(customZikrInput)
-      setCustomZikrInput("")
+      };
+      setSelectedZikr(customZikr);
+      setCustomZikr(customZikrInput);
+      setCustomZikrInput("");
     }
-  }
+  };
 
   const getCounterColor = () => {
-    if (misbaha.count >= 100) return "text-emerald-600 dark:text-emerald-400"
-    if (misbaha.count >= 33) return "text-blue-600 dark:text-blue-400"
-    return "text-gray-600 dark:text-gray-400"
-  }
+    if (misbaha.count >= 100) return "text-emerald-600 dark:text-emerald-400";
+    if (misbaha.count >= 33) return "text-blue-600 dark:text-blue-400";
+    return "text-gray-600 dark:text-gray-400";
+  };
 
   return (
     <SidebarInset>
@@ -81,20 +113,29 @@ export default function MisbahaPage() {
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
           <h1 className="text-lg font-semibold">Misbaha</h1>
-          <span className="text-sm arabic-text text-muted-foreground">المسبحة</span>
+          <span className="text-sm arabic-text text-muted-foreground">
+            المسبحة
+          </span>
         </div>
       </header>
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Current Zikr Display */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="arabic-text text-2xl leading-relaxed">{selectedZikr.arabic}</CardTitle>
+                <CardTitle className="arabic-text text-2xl leading-relaxed">
+                  {selectedZikr.arabic}
+                </CardTitle>
                 <CardDescription className="space-y-1">
                   <div className="text-lg">{selectedZikr.transliteration}</div>
-                  <div className="text-sm text-muted-foreground">{selectedZikr.translation}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedZikr.translation}
+                  </div>
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -119,9 +160,15 @@ export default function MisbahaPage() {
 
               {/* Progress indicators */}
               <div className="flex justify-center gap-2 mt-4">
-                <Badge variant={misbaha.count >= 33 ? "default" : "outline"}>33</Badge>
-                <Badge variant={misbaha.count >= 66 ? "default" : "outline"}>66</Badge>
-                <Badge variant={misbaha.count >= 99 ? "default" : "outline"}>99</Badge>
+                <Badge variant={misbaha.count >= 33 ? "default" : "outline"}>
+                  33
+                </Badge>
+                <Badge variant={misbaha.count >= 66 ? "default" : "outline"}>
+                  66
+                </Badge>
+                <Badge variant={misbaha.count >= 99 ? "default" : "outline"}>
+                  99
+                </Badge>
               </div>
             </div>
 
@@ -138,7 +185,11 @@ export default function MisbahaPage() {
 
             {/* Action Buttons */}
             <div className="flex justify-center gap-4">
-              <Button onClick={handleReset} variant="outline" className="flex items-center gap-2 bg-transparent">
+              <Button
+                onClick={handleReset}
+                variant="outline"
+                className="flex items-center gap-2 bg-transparent"
+              >
                 <RotateCcw className="h-4 w-4" />
                 Reset
               </Button>
@@ -169,13 +220,19 @@ export default function MisbahaPage() {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Button
-                      variant={selectedZikr.arabic === zikr.arabic ? "default" : "outline"}
+                      variant={
+                        selectedZikr.arabic === zikr.arabic
+                          ? "default"
+                          : "outline"
+                      }
                       className="w-full justify-start h-auto p-3"
                       onClick={() => handleZikrSelect(zikr)}
                     >
                       <div className="text-left">
                         <div className="arabic-text text-sm">{zikr.arabic}</div>
-                        <div className="text-xs text-muted-foreground">{zikr.transliteration}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {zikr.transliteration}
+                        </div>
                       </div>
                     </Button>
                   </motion.div>
@@ -196,7 +253,11 @@ export default function MisbahaPage() {
                     className="arabic-text text-right"
                     dir="rtl"
                   />
-                  <Button onClick={handleCustomZikrSubmit} className="w-full" disabled={!customZikrInput.trim()}>
+                  <Button
+                    onClick={handleCustomZikrSubmit}
+                    className="w-full"
+                    disabled={!customZikrInput.trim()}
+                  >
                     Use Custom Zikr
                   </Button>
                 </div>
@@ -210,10 +271,14 @@ export default function MisbahaPage() {
                         .slice(-5)
                         .reverse()
                         .map((session, index) => (
-                          <div key={index} className="text-sm p-2 bg-muted rounded">
+                          <div
+                            key={index}
+                            className="text-sm p-2 bg-muted rounded"
+                          >
                             <div className="arabic-text">{session.zikr}</div>
                             <div className="text-xs text-muted-foreground">
-                              {session.count} times • {new Date(session.date).toLocaleDateString()}
+                              {session.count} times •{" "}
+                              {new Date(session.date).toLocaleDateString()}
                             </div>
                           </div>
                         ))}
@@ -226,5 +291,5 @@ export default function MisbahaPage() {
         </div>
       </div>
     </SidebarInset>
-  )
+  );
 }
