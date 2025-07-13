@@ -48,6 +48,11 @@ const commonZikr = [
     transliteration: "La hawla wa la quwwata illa billah",
     translation: "There is no power except with Allah",
   },
+  {
+    arabic: "اللهم صلي على سيدنا محمد",
+    transliteration: "Allahum salli ala saidena Muhammad",
+    translation: "The blessings of God to the Prophet Muhammad.",
+  },
 ];
 
 export default function MisbahaPage() {
@@ -128,7 +133,7 @@ export default function MisbahaPage() {
           >
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="arabic-text text-2xl leading-relaxed">
+                <CardTitle className="arabic-text text-2xl leading-relaxed text-center">
                   {selectedZikr.arabic}
                 </CardTitle>
                 <CardDescription className="space-y-1">
@@ -176,7 +181,7 @@ export default function MisbahaPage() {
             <motion.div whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={handleIncrement}
-                className="misbaha-button h-32 w-32 rounded-full text-xl font-semibold"
+                className="emerald-gradient h-32 w-32 rounded-full text-xl font-semibold"
                 size="lg"
               >
                 <span className="arabic-text">سبح</span>
@@ -188,19 +193,19 @@ export default function MisbahaPage() {
               <Button
                 onClick={handleReset}
                 variant="outline"
-                className="flex items-center gap-2 bg-transparent"
+                className="flex items-center gap-2 bg-transparent arabic-text"
               >
                 <RotateCcw className="h-4 w-4" />
-                Reset
+                إرجاع
               </Button>
               <Button
                 onClick={handleSaveSession}
                 variant="outline"
-                className="flex items-center gap-2 bg-transparent"
+                className="flex items-center gap-2 bg-transparent arabic-text"
                 disabled={misbaha.count === 0}
               >
                 <Save className="h-4 w-4" />
-                Save Session
+                حفظ الجلسة
               </Button>
             </div>
           </motion.div>
@@ -209,7 +214,7 @@ export default function MisbahaPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Common Zikr</CardTitle>
+                <CardTitle className="arabic-text">ذكر شائع</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {commonZikr.map((zikr, index) => (
@@ -225,13 +230,21 @@ export default function MisbahaPage() {
                           ? "default"
                           : "outline"
                       }
-                      className="w-full justify-start h-auto p-3"
+                      className="w-full h-auto p-3"
                       onClick={() => handleZikrSelect(zikr)}
                     >
-                      <div className="text-left">
-                        <div className="arabic-text text-sm">{zikr.arabic}</div>
-                        <div className="text-xs text-muted-foreground">
+                      <div className="w-full flex items-center justify-between flex-wrap-reverse">
+                        <div
+                          className={`text-sm w-full text-left ${
+                            selectedZikr.arabic === zikr.arabic
+                              ? "text-emerald-foreground"
+                              : "text-muted-foreground"
+                          }`}
+                        >
                           {zikr.transliteration}
+                        </div>
+                        <div className="arabic-text text-base w-full">
+                          {zikr.arabic}
                         </div>
                       </div>
                     </Button>
@@ -242,12 +255,12 @@ export default function MisbahaPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Custom Zikr</CardTitle>
+                <CardTitle className="arabic-text">ذكر مخصص</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Input
-                    placeholder="Enter custom zikr in Arabic..."
+                    placeholder="أدخل ذكرك الخاص..."
                     value={customZikrInput}
                     onChange={(e) => setCustomZikrInput(e.target.value)}
                     className="arabic-text text-right"
@@ -255,20 +268,33 @@ export default function MisbahaPage() {
                   />
                   <Button
                     onClick={handleCustomZikrSubmit}
-                    className="w-full"
+                    className="w-full arabic-text"
                     disabled={!customZikrInput.trim()}
                   >
-                    Use Custom Zikr
+                    إستخدم ذكر مخصص
                   </Button>
                 </div>
 
                 {/* Recent Sessions */}
                 {misbaha.sessions.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="font-medium">Recent Sessions</h4>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium arabic-text">
+                        الجلسات السابقة
+                      </h4>
+                      <Button
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 p-1 text-sm"
+                        onClick={() =>
+                          useAppStore.getState().clearMisbahaSessions()
+                        }
+                      >
+                        حذف الكل
+                      </Button>
+                    </div>
+                    <div className="space-y-1 max-h-80 overflow-y-auto">
                       {misbaha.sessions
-                        .slice(-5)
+                        .slice() // important to not mutate original
                         .reverse()
                         .map((session, index) => (
                           <div
@@ -276,9 +302,11 @@ export default function MisbahaPage() {
                             className="text-sm p-2 bg-muted rounded"
                           >
                             <div className="arabic-text">{session.zikr}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {session.count} times •{" "}
-                              {new Date(session.date).toLocaleDateString()}
+                            <div className="text-xs text-muted-foreground arabic-text">
+                              {session.count} مرة •{" "}
+                              {new Date(session.date).toLocaleDateString(
+                                "ar-EG"
+                              )}
                             </div>
                           </div>
                         ))}

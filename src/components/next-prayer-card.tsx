@@ -115,10 +115,7 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
   return (
     <motion.div variants={itemVariants}>
-      <Card
-        dir="rtl"
-        className="bg-gradient-to-bl from-primary to-primary-light text-primary-foreground arabic-text"
-      >
+      <Card className="emerald-gradient text-emerald-foreground arabic-text">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Clock className="h-5 w-5" />
@@ -135,10 +132,10 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
           ) : prayerName && prayerTime && countdown ? (
             <div className="space-y-2 text-right">
               <div className="text-2xl font-bold">{prayerName}</div>
-              <div className="text-lg text-primary-foreground/80">
+              <div className="text-lg text-emerald-foreground/80">
                 {formatTo12Hour(prayerTime)}
               </div>
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="secondary" className="text-base font-semibold">
                 بعد {countdown}
               </Badge>
             </div>

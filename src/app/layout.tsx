@@ -1,20 +1,17 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import {
-  // Inter,
-  Amiri,
-} from "next/font/google";
+// import { Inter, Amiri } from "next/font/google";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
 // const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const amiri = Amiri({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "700"],
-  variable: "--font-amiri",
-});
+// const amiri = Amiri({
+//   subsets: ["arabic", "latin"],
+//   weight: ["400", "700"],
+//   variable: "--font-amiri",
+// });
 
 export const metadata: Metadata = {
   title: "werd - Islamic Dashboard",
@@ -32,8 +29,8 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-title" content="وِرد" />
       </head>
-      {/* ${inter.variable} */}
-      <body className={` ${amiri.variable} font-sans`}>
+      {/* ${inter.variable} ${amiri.variable}*/}
+      <body className={`  font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

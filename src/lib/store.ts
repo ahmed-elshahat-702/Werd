@@ -57,6 +57,7 @@ interface AppState {
   resetMisbaha: () => void;
   setCustomZikr: (zikr: string) => void;
   saveMisbahaSession: () => void;
+  clearMisbahaSessions: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -141,12 +142,20 @@ export const useAppStore = create<AppState>()(
             count: 0,
           },
         })),
+      clearMisbahaSessions: () =>
+        set((state) => ({
+          misbaha: {
+            ...state.misbaha,
+            sessions: [],
+          },
+        })),
     }),
     {
       name: "werd-storage",
       partialize: (state) => ({
         user: state.user,
         bookmarks: state.bookmarks,
+        misbaha: state.misbaha,
         completedAzkar: state.completedAzkar,
         dailyVerseState: state.dailyVerseState,
       }),

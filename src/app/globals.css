@@ -32,27 +32,26 @@
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
+  --color-primary-foreground: var(--emerald-foreground);
+  --color-primary: var(--emerald);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-
-  --color-primary-light: var(--primary-light);
-  --color-primary-light-foreground: var(--primary-light-foreground);
-
-  /* Islamic color palette */
-  --color-sand: var(--sand);
-  --color-sand-foreground: var(--sand-foreground);
   --color-emerald: var(--emerald);
   --color-emerald-foreground: var(--emerald-foreground);
+
+  --color-emerald-light: var(--emerald-light);
+  --color-emerald-light-foreground: var(--emerald-light-foreground);
+
+  --color-sand: var(--sand);
+  --color-sand-foreground: var(--sand-foreground);
+
   --color-night-blue: var(--night-blue);
   --color-night-blue-foreground: var(--night-blue-foreground);
+
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
 
@@ -96,21 +95,20 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  --primary: oklch(0.6 0.07 139.42);
-  --primary-foreground: oklch(0.985 0 0);
+  --emerald: #6C8D64;
+  --emerald-foreground: #FFFFFF;
 
-  --primary-light: #A8c8A8;
-  --primary-light-foreground: #000;
+  --emerald-light: #A8C8A8;
+  --emerald-light-foreground: #000000;
 
-  /* Islamic color palette */
-  --sand: hsl(45 29% 97%);
-  --sand-foreground: hsl(45 29% 15%);
-  --emerald: hsl(160 84% 39%);
-  --emerald-foreground: hsl(355.7 100% 97.3%);
-  --night-blue: hsl(220 39% 11%);
-  --night-blue-foreground: hsl(210 40% 98%);
-  --gold: hsl(45 93% 58%);
-  --gold-foreground: hsl(45 29% 15%);
+  --sand: #F5EFE6;
+  --sand-foreground: #000000;
+
+  --night-blue: #5A6B72;
+  --night-blue-foreground: #FFFFFF;
+
+  --gold: #D4AF37;
+  --gold-foreground: #FFFFFF;
 }
 
 .dark {
@@ -179,14 +177,9 @@
     background: linear-gradient(135deg, hsl(var(--sand)) 0%, hsl(var(--gold) / 0.1) 100%);
   }
 
-  .prayer-card {
-    @apply bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900;
-    @apply border border-emerald-200 dark:border-emerald-800;
-  }
-
-  .misbaha-button {
-    @apply bg-gradient-to-br from-emerald-500 to-emerald-600;
-    @apply hover:from-emerald-600 hover:to-emerald-700;
+  .emerald-gradient {
+    @apply text-emerald-foreground bg-gradient-to-r from-emerald-700 via-emerald-800 to-emerald-900;
+    @apply hover:via-emerald-900 hover:to-emerald-950;
     @apply active:scale-95 transition-all duration-150;
     @apply shadow-lg hover:shadow-xl;
   }
