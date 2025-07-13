@@ -32,7 +32,7 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
         if (isNewDay) {
           const res = await fetch(
-            `http://api.alquran.cloud/v1/surah/${surahId}`
+            `https://api.alquran.cloud/v1/surah/${surahId}`
           );
           const data = await res.json();
           const totalAyat = data.data.numberOfAyahs;

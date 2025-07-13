@@ -1,64 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface User {
-  name: string;
-  location: string;
-}
-
-interface Surah {
-  id: number;
-  name_simple: string;
-  name_arabic: string;
-  verses_count: number;
-}
-
-interface Bookmark {
-  id: string;
-  type: "quran" | "hadith";
-  title: string;
-  content: string;
-}
-
-interface AppState {
-  user: User;
-  selectedSurah: Surah | null;
-  selectedZikr: string;
-  bookmarks: Bookmark[];
-  completedAzkar: string[];
-  isLoading: boolean;
-  setIsLoading: (state: boolean) => void;
-  isHandling: boolean;
-  setIsHandling: (state: boolean) => void;
-  misbaha: {
-    count: number;
-    customZikr: string;
-    sessions: Array<{ zikr: string; count: number; date: string }>;
-  };
-
-  dailyVerseState: {
-    surahId: number;
-    ayahNumber: number;
-    lastShownDate: string; // in format YYYY-MM-DD
-  };
-
-  updateDailyVerseState: (
-    date: string,
-    surahId: number,
-    ayahNumber: number
-  ) => void;
-
-  setSurah: (surah: Surah) => void;
-  setZikr: (zikr: string) => void;
-  addBookmark: (bookmark: Bookmark) => void;
-  removeBookmark: (id: string) => void;
-  markAzkarComplete: (azkarId: string) => void;
-  incrementMisbaha: () => void;
-  resetMisbaha: () => void;
-  setCustomZikr: (zikr: string) => void;
-  saveMisbahaSession: () => void;
-  clearMisbahaSessions: () => void;
-}
+import { AppState } from "./types";
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -68,10 +10,12 @@ export const useAppStore = create<AppState>()(
         location: "Cairo",
       },
       selectedSurah: null,
-      selectedZikr: "سبحان الله",
       bookmarks: [],
+      azkar: { morning: [], evening: [], afterPrayer: [], sleep: [] },
+      setAzkar: (data) => set({ azkar: data }),
       theme: "light",
-      completedAzkar: [],
+      lastResetDate: "",
+      setLastResetDate: (date) => set({ lastResetDate: date }),
       isLoading: false,
       setIsLoading: (state) => set({ isLoading: state }),
       isHandling: false,
@@ -81,18 +25,12 @@ export const useAppStore = create<AppState>()(
         customZikr: "سبحان الله",
         sessions: [],
       },
-
       dailyVerseState: {
         surahId: 1,
         ayahNumber: 1,
-        lastShownDate: "", // in format YYYY-MM-DD
+        lastShownDate: "",
       },
-
-      updateDailyVerseState: (
-        date: string,
-        surahId: number,
-        ayahNumber: number
-      ) =>
+      updateDailyVerseState: (date, surahId, ayahNumber) =>
         set({
           dailyVerseState: {
             surahId,
@@ -100,9 +38,65 @@ export const useAppStore = create<AppState>()(
             lastShownDate: date,
           },
         }),
-
+      incrementZikr: (category, zikrId) => {
+        set((state) => ({
+          azkar: {
+            ...state.azkar,
+            [category]: state.azkar[category].map((zikr) =>
+              zikr.id === zikrId && zikr.currentCount < zikr.count
+                ? { ...zikr, currentCount: zikr.currentCount + 1 }
+                : zikr
+            ),
+          },
+        }));
+        if ("vibrate" in navigator) navigator.vibrate(30);
+      },
+      resetZikr: (category, zikrId) => {
+        set((state) => ({
+          azkar: {
+            ...state.azkar,
+            [category]: state.azkar[category].map((zikr) =>
+              zikr.id === zikrId ? { ...zikr, currentCount: 0 } : zikr
+            ),
+          },
+        }));
+      },
+      resetCategory: (category) => {
+        set((state) => ({
+          azkar: {
+            ...state.azkar,
+            [category]: state.azkar[category].map((zikr) => ({
+              ...zikr,
+              currentCount: 0,
+            })),
+          },
+        }));
+      },
+      resetAllAzkar: () => {
+        set((state) => ({
+          azkar: {
+            ...state.azkar,
+            morning: state.azkar.morning.map((zikr) => ({
+              ...zikr,
+              currentCount: 0,
+            })),
+            evening: state.azkar.evening.map((zikr) => ({
+              ...zikr,
+              currentCount: 0,
+            })),
+            afterPrayer: state.azkar.afterPrayer.map((zikr) => ({
+              ...zikr,
+              currentCount: 0,
+            })),
+            sleep: state.azkar.sleep.map((zikr) => ({
+              ...zikr,
+              currentCount: 0,
+            })),
+          },
+          lastResetDate: new Date().toDateString(),
+        }));
+      },
       setSurah: (surah) => set({ selectedSurah: surah }),
-      setZikr: (zikr) => set({ selectedZikr: zikr }),
       addBookmark: (bookmark) =>
         set((state) => ({
           bookmarks: [...state.bookmarks, bookmark],
@@ -110,10 +104,6 @@ export const useAppStore = create<AppState>()(
       removeBookmark: (id) =>
         set((state) => ({
           bookmarks: state.bookmarks.filter((b) => b.id !== id),
-        })),
-      markAzkarComplete: (azkarId) =>
-        set((state) => ({
-          completedAzkar: [...state.completedAzkar, azkarId],
         })),
       incrementMisbaha: () =>
         set((state) => ({
@@ -153,11 +143,15 @@ export const useAppStore = create<AppState>()(
     {
       name: "werd-storage",
       partialize: (state) => ({
-        user: state.user,
-        bookmarks: state.bookmarks,
-        misbaha: state.misbaha,
-        completedAzkar: state.completedAzkar,
-        dailyVerseState: state.dailyVerseState,
+        user: { ...state.user },
+        bookmarks: [...state.bookmarks],
+        azkar: { ...state.azkar },
+        misbaha: {
+          ...state.misbaha,
+          sessions: [...state.misbaha.sessions],
+        },
+        dailyVerseState: { ...state.dailyVerseState },
+        lastResetDate: state.lastResetDate,
       }),
     }
   )
