@@ -4,18 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
+import { formatTo12Hour } from "@/lib/utils";
 import { motion, Variants } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-
-const formatTo12Hour = (time: string) => {
-  const [hourStr, minuteStr] = time.split(":");
-  let hour = parseInt(hourStr);
-  const minute = minuteStr.padStart(2, "0");
-  const ampm = hour >= 12 ? "م" : "ص";
-  hour = hour % 12 || 12;
-  return `${hour}:${minute} ${ampm}`;
-};
 
 const formatDate = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");

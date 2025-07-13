@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
 import { PrayerTimes } from "@/lib/types";
 import { toast } from "sonner";
+import { formatTo12Hour } from "@/lib/utils";
 
 export default function PrayerTimesPage() {
   const {
@@ -29,8 +30,8 @@ export default function PrayerTimesPage() {
     isHandling,
     setIsHandling,
   } = useAppStore();
-  const [currentPrayer, setCurrentPrayer] = useState<string>("");
-  const [nextPrayer, setNextPrayer] = useState<string>("");
+  const [currentPrayer, setCurrentPrayer] = useState<string | undefined>("");
+  const [nextPrayer, setNextPrayer] = useState<string | undefined>("");
   const [countdown, setCountdown] = useState<string>("");
   const [locationInput, setLocationInput] = useState<{
     city: string;
@@ -69,15 +70,14 @@ export default function PrayerTimesPage() {
           Isha: "19:45",
         };
         setPrayerTimes(fallbackTimes);
-        setError("Failed to fetch prayer times. Using fallback times.");
+        setError("فشل في جلب أوقات الصلاة. استخدام أوقات افتراضية.");
         toast.error(
-          "Failed to fetch prayer times. Using fallback times for Cairo, Egypt."
+          "فشل في جلب أوقات الصلاة. استخدام أوقات افتراضية للقاهرة، مصر."
         );
       } finally {
         setIsHandling(false);
       }
     };
-    // Only fetch on initial load if prayerTimes is null
     if (!prayerTimes) {
       fetchPrayerTimes();
     }
@@ -99,14 +99,14 @@ export default function PrayerTimesPage() {
     const prayers = [
       { name: "Fajr", time: times.Fajr },
       { name: "Sunrise", time: times.Sunrise },
-      { name: "Dhuhr", time: times.Dhuhr },
+      { HOUSE: "Dhuhr", time: times.Dhuhr },
       { name: "Asr", time: times.Asr },
       { name: "Maghrib", time: times.Maghrib },
       { name: "Isha", time: times.Isha },
     ];
 
-    let current = "";
-    let next = "";
+    let current: string | undefined = "";
+    let next: string | undefined = "";
 
     for (let i = 0; i < prayers.length; i++) {
       const [hours, minutes] = prayers[i].time.split(":").map(Number);
@@ -152,46 +152,46 @@ export default function PrayerTimesPage() {
       prayerTimes
         ? [
             {
-              name: "Fajr",
-              arabic: "الفجر",
+              name: "الفجر",
+              english: "Fajr",
               time: prayerTimes.Fajr,
               icon: <Moon className="h-5 w-5" />,
-              description: "Dawn prayer",
+              description: "صلاة الفجر",
             },
             {
-              name: "Sunrise",
-              arabic: "الشروق",
+              name: "الشروق",
+              english: "Sunrise",
               time: prayerTimes.Sunrise,
               icon: <Sun className="h-5 w-5" />,
-              description: "Sunrise (not a prayer)",
+              description: "الشروق (ليس صلاة)",
             },
             {
-              name: "Dhuhr",
-              arabic: "الظهر",
+              name: "الظهر",
+              english: "Dhuhr",
               time: prayerTimes.Dhuhr,
               icon: <Sun className="h-5 w-5" />,
-              description: "Midday prayer",
+              description: "صلاة الظهر",
             },
             {
-              name: "Asr",
-              arabic: "العصر",
+              name: "العصر",
+              english: "Asr",
               time: prayerTimes.Asr,
               icon: <Sun className="h-5 w-5" />,
-              description: "Afternoon prayer",
+              description: "صلاة العصر",
             },
             {
-              name: "Maghrib",
-              arabic: "المغرب",
+              name: "المغرب",
+              english: "Maghrib",
               time: prayerTimes.Maghrib,
               icon: <Sun className="h-5 w-5" />,
-              description: "Sunset prayer",
+              description: "صلاة المغرب",
             },
             {
-              name: "Isha",
-              arabic: "العشاء",
+              name: "العشاء",
+              english: "Isha",
               time: prayerTimes.Isha,
               icon: <Moon className="h-5 w-5" />,
-              description: "Night prayer",
+              description: "صلاة العشاء",
             },
           ]
         : [],
@@ -227,16 +227,16 @@ export default function PrayerTimesPage() {
           Isha: "19:45",
         };
         setPrayerTimes(fallbackTimes);
-        setError("Failed to fetch prayer times. Using fallback times.");
+        setError("فشل في جلب أوقات الصلاة. استخدام أوقات افتراضية.");
         toast.error(
-          "Failed to fetch prayer times. Using fallback times for Cairo, Egypt."
+          "فشل في جلب أوقات الصلاة. استخدام أوقات افتراضية للقاهرة، مصر."
         );
       } finally {
         setIsHandling(false);
       }
     } else {
-      setError("Please enter a valid city and country name.");
-      toast.error("Please enter a valid city and country name.");
+      setError("يرجى إدخال اسم مدينة ودولة صحيحين.");
+      toast.error("يرجى إدخال اسم مدينة ودولة صحيحين.");
     }
   };
 
@@ -253,11 +253,11 @@ export default function PrayerTimesPage() {
             <div className="grid gap-6 md:grid-cols-2">
               <Skeleton
                 className="h-[140px] w-full"
-                aria-label="Loading location card"
+                aria-label="جارٍ تحميل بطاقة الموقع"
               />
               <Skeleton
                 className="h-[140px] w-full"
-                aria-label="Loading next prayer card"
+                aria-label="جارٍ تحميل بطاقة الصلاة التالية"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -265,13 +265,13 @@ export default function PrayerTimesPage() {
                 <Skeleton
                   key={index}
                   className="h-[140px] w-full"
-                  aria-label={`Loading prayer time card ${index + 1}`}
+                  aria-label={`جارٍ تحميل بطاقة وقت الصلاة ${index + 1}`}
                 />
               ))}
             </div>
             <Skeleton
               className="h-[160px] w-full"
-              aria-label="Loading prayer reminders card"
+              aria-label="جارٍ تحميل بطاقة تذكيرات الصلاة"
             />
           </div>
         </div>
@@ -284,10 +284,10 @@ export default function PrayerTimesPage() {
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-baseline gap-2">
           <Clock className="h-5 w-5" />
           <h1 className="text-lg font-semibold">Prayer Times</h1>
-          <span className="text-sm arabic-text text-muted-foreground">
+          <span className="text-sm text-muted-foreground arabic-text">
             أوقات الصلاة
           </span>
         </div>
@@ -295,7 +295,6 @@ export default function PrayerTimesPage() {
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Location and Next Prayer */}
           <div className="grid gap-6 md:grid-cols-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -303,20 +302,20 @@ export default function PrayerTimesPage() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 arabic-text">
                     <MapPin className="h-5 w-5" />
-                    Location
+                    الموقع
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div dir="rtl" className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Input
                         value={locationInput.city}
                         onChange={(e) =>
                           setLocationInput({
                             ...locationInput,
-                            city: e.target.value,
+                            city: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
                           })
                         }
                         placeholder="Enter city name"
@@ -327,18 +326,22 @@ export default function PrayerTimesPage() {
                         onChange={(e) =>
                           setLocationInput({
                             ...locationInput,
-                            country: e.target.value,
+                            country: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
                           })
                         }
                         placeholder="Enter country name"
                         aria-label="Country name for prayer times"
                       />
+                      <Button onClick={handleLocationChange}>تحديث</Button>
                     </div>
-                    <Button onClick={handleLocationChange}>Update</Button>
-                    {error && <p className="text-sm text-red-500">{error}</p>}
-                    <p className="text-lg">{location}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date().toLocaleDateString("en-US", {
+                    {error && (
+                      <p className="text-sm text-red-500 arabic-text">
+                        {error}
+                      </p>
+                    )}
+                    <p className="text-lg arabic-text">{location}</p>
+                    <p className="text-sm text-muted-foreground arabic-text">
+                      {new Date().toLocaleDateString("ar-EG", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
@@ -357,23 +360,19 @@ export default function PrayerTimesPage() {
             >
               <Card className="prayer-card">
                 <CardHeader>
-                  <CardTitle>Next Prayer</CardTitle>
+                  <CardTitle className="arabic-text">الصلاة التالية</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="text-2xl font-bold">{nextPrayer}</div>
-                    <div className="arabic-text text-lg text-muted-foreground">
-                      {prayerInfo.find((p) => p.name === nextPrayer)?.arabic}
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold arabic-text">
+                        {nextPrayer}
+                      </div>
+                      <div className="text-lg text-muted-foreground arabic-text">
+                        {prayerInfo.find((p) => p.english === nextPrayer)?.name}
+                      </div>
                     </div>
-                    <motion.div
-                      className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        repeatDelay: 1,
-                      }}
-                    >
+                    <motion.div className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400">
                       {countdown}
                     </motion.div>
                   </div>
@@ -382,7 +381,6 @@ export default function PrayerTimesPage() {
             </motion.div>
           </div>
 
-          {/* Prayer Times Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {prayerInfo.map((prayer, index) => (
               <motion.div
@@ -392,13 +390,14 @@ export default function PrayerTimesPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
+                  dir="rtl"
                   className={`${
-                    currentPrayer === prayer.name
+                    currentPrayer === prayer.english
                       ? "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950"
                       : ""
-                  } ${prayer.name === "Sunrise" ? "opacity-60" : ""}`}
+                  } ${prayer.english === "Sunrise" ? "opacity-60" : ""}`}
                   role="region"
-                  aria-label={`${prayer.name} prayer time card`}
+                  aria-label={`بطاقة وقت صلاة ${prayer.name}`}
                 >
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center justify-between">
@@ -406,15 +405,17 @@ export default function PrayerTimesPage() {
                         {prayer.icon}
                         <span className="arabic-text">{prayer.name}</span>
                       </div>
-                      {currentPrayer === prayer.name && (
-                        <Badge className="bg-emerald-500">Current</Badge>
+                      {currentPrayer === prayer.english && (
+                        <Badge className="bg-emerald-500 arabic-text">
+                          الحالية
+                        </Badge>
                       )}
-                      {nextPrayer === prayer.name && (
+                      {nextPrayer === prayer.english && (
                         <Badge
                           variant="outline"
-                          className="border-emerald-500 text-emerald-600"
+                          className="border-emerald-500 text-emerald-600 arabic-text"
                         >
-                          Next
+                          التالية
                         </Badge>
                       )}
                     </CardTitle>
@@ -422,12 +423,12 @@ export default function PrayerTimesPage() {
                   <CardContent>
                     <div className="space-y-2">
                       <div className="text-2xl font-bold font-mono">
-                        {prayer.time}
+                        {formatTo12Hour(prayer.time)}
                       </div>
-                      <div className="arabic-text text-lg text-muted-foreground">
-                        {prayer.arabic}
+                      <div className="text-lg text-muted-foreground">
+                        {prayer.english}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground arabic-text">
                         {prayer.description}
                       </div>
                     </div>
@@ -437,7 +438,6 @@ export default function PrayerTimesPage() {
             ))}
           </div>
 
-          {/* Prayer Reminders */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -445,22 +445,24 @@ export default function PrayerTimesPage() {
           >
             <Card className="arabic-text">
               <CardHeader>
-                <CardTitle>تذكيرات الصلاة</CardTitle>
-                <CardDescription>كن على صلة بصلواتك اليومية</CardDescription>
+                <CardTitle className="arabic-text">تذكيرات الصلاة</CardTitle>
+                <CardDescription className="arabic-text">
+                  كن على صلة بصلواتك اليومية
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <h4 className="font-medium">قبل الصلاة</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                    <h4 className="font-medium arabic-text">قبل الصلاة</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
                       <li>• الوضوء</li>
                       <li>• التوجه للقبلة</li>
                       <li>• اختيار مكان طاهر</li>
                     </ul>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="font-medium">بعد الصلاة</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                    <h4 className="font-medium arabic-text">بعد الصلاة</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
                       <li>• التسبيح (٣٣ مرة لكل نوع)</li>
                       <li>• الدعاء</li>
                       <li>• قراءة القرآن</li>
