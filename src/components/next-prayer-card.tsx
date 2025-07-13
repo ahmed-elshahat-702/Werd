@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAppStore } from "@/lib/store";
 import { motion, Variants } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
@@ -32,6 +33,8 @@ const PRAYER_TRANSLATIONS: Record<string, string> = {
 };
 
 const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
+  const { location } = useAppStore();
+
   const [prayerName, setPrayerName] = useState<string | null>(null);
   const [prayerTime, setPrayerTime] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
@@ -39,9 +42,6 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
   const date = new Date();
   const formattedDate = formatDate(date);
-
-  const city = "Cairo";
-  const country = "Egypt";
 
   const calculateCountdown = useCallback((prayerTime: string) => {
     const now = new Date();
@@ -62,6 +62,8 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
   useEffect(() => {
     const fetchPrayerTimes = async () => {
+      const city = location.split(",")[0]?.trim() || "";
+      const country = location.split(",")[1]?.trim() || "";
       try {
         const res = await fetch(
           `https://api.aladhan.com/v1/timingsByCity/${formattedDate}?city=${city}&country=${country}`
@@ -101,7 +103,7 @@ const NextPrayerCard = ({ itemVariants }: { itemVariants: Variants }) => {
     };
 
     fetchPrayerTimes();
-  }, [calculateCountdown, formattedDate]);
+  }, [calculateCountdown, formattedDate, location]);
 
   useEffect(() => {
     if (!prayerTime) return;

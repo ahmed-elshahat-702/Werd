@@ -7,15 +7,18 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       user: {
         name: "أخي الكريم",
-        location: "Cairo",
+        location: "Cairo, Egypt",
       },
       selectedSurah: null,
       bookmarks: [],
       azkar: { morning: [], evening: [], afterPrayer: [], sleep: [] },
       setAzkar: (data) => set({ azkar: data }),
-      theme: "light",
       lastResetDate: "",
       setLastResetDate: (date) => set({ lastResetDate: date }),
+      prayerTimes: null,
+      setPrayerTimes: (times) => set({ prayerTimes: times }),
+      location: "Cairo, Egypt",
+      setLocation: (location) => set({ location }),
       isLoading: false,
       setIsLoading: (state) => set({ isLoading: state }),
       isHandling: false,
@@ -152,6 +155,8 @@ export const useAppStore = create<AppState>()(
         },
         dailyVerseState: { ...state.dailyVerseState },
         lastResetDate: state.lastResetDate,
+        prayerTimes: state.prayerTimes,
+        location: state.location,
       }),
     }
   )

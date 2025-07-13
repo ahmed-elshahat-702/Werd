@@ -29,6 +29,15 @@ export interface ZikrItem {
 
 export type AzkarCategory = "morning" | "evening" | "afterPrayer" | "sleep";
 
+export interface PrayerTimes {
+  Fajr: string;
+  Sunrise: string;
+  Dhuhr: string;
+  Asr: string;
+  Maghrib: string;
+  Isha: string;
+}
+
 export interface AppState {
   user: User;
   selectedSurah: Surah | null;
@@ -37,6 +46,10 @@ export interface AppState {
   setAzkar: (data: Record<AzkarCategory, ZikrItem[]>) => void;
   lastResetDate: string;
   setLastResetDate: (date: string) => void;
+  prayerTimes: PrayerTimes | null;
+  setPrayerTimes: (times: PrayerTimes) => void;
+  location: string;
+  setLocation: (location: string) => void;
   incrementZikr: (category: AzkarCategory, zikrId: string) => void;
   resetZikr: (category: AzkarCategory, zikrId: string) => void;
   resetCategory: (category: AzkarCategory) => void;
