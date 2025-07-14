@@ -3,13 +3,13 @@
 import type * as React from "react";
 import {
   BookOpen,
-  Calendar,
   Home,
   User,
   Clock,
   Heart,
   Bookmark,
   Settings,
+  Droplet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -59,7 +59,7 @@ const menuItems = [
   {
     title: "Misbaha",
     url: "/misbaha",
-    icon: Clock,
+    icon: Droplet,
     arabic: "المسبحة",
   },
   {
@@ -67,12 +67,6 @@ const menuItems = [
     url: "/prayer-times",
     icon: Clock,
     arabic: "أوقات الصلاة",
-  },
-  {
-    title: "Calendar",
-    url: "/calendar",
-    icon: Calendar,
-    arabic: "التقويم",
   },
 ];
 
