@@ -37,6 +37,19 @@ export interface Recitation {
   direction: string | null;
 }
 
+// Verse with translation
+export interface EnhancedVerse extends Verse {
+  translation?: string;
+  audioUrl?: string;
+}
+
+export interface PageData {
+  number: number;
+  verses: EnhancedVerse[];
+}
+
+export type ViewMode = "cards" | "mushaf";
+
 export interface Book {
   id: number;
   bookName: string;
