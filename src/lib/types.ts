@@ -10,6 +10,69 @@ export interface Surah {
   verses_count: number;
 }
 
+export interface Book {
+  id: number;
+  bookName: string;
+  writerName: string;
+  aboutWriter: string | null;
+  writerDeath: string;
+  bookSlug: string;
+}
+
+export interface Chapter {
+  id: number;
+  chapterNumber: string;
+  chapterEnglish: string;
+  chapterUrdu: string;
+  chapterArabic: string;
+  bookSlug: string;
+}
+
+export interface Hadith {
+  id: number;
+  hadithNumber: string;
+  englishNarrator: string;
+  urduNarrator: string;
+  hadithEnglish: string;
+  hadithUrdu: string;
+  hadithArabic: string;
+  headingArabic: string;
+  headingUrdu: string;
+  headingEnglish: string;
+  chapterId: string;
+  bookSlug: string;
+  volume: string;
+  status: string;
+  book: Book;
+  chapter: Chapter;
+}
+
+export interface PaginationLink {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
+export interface HadithsResponse {
+  status: number;
+  message: string;
+  hadiths: {
+    current_page: number;
+    data: Hadith[];
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+    links: PaginationLink[];
+  };
+}
+
 export interface Bookmark {
   id: string;
   type: "quran" | "hadith";
@@ -44,6 +107,8 @@ export interface AppState {
   bookmarks: Bookmark[];
   azkar: Record<AzkarCategory, ZikrItem[]>;
   setAzkar: (data: Record<AzkarCategory, ZikrItem[]>) => void;
+  dailyHadiths: { hadiths: Hadith[]; date: string };
+  setDailyHadiths: (hadiths: Hadith[], date: string) => void;
   lastResetDate: string;
   setLastResetDate: (date: string) => void;
   prayerTimes: PrayerTimes | null;

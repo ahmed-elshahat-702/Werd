@@ -13,6 +13,9 @@ export const useAppStore = create<AppState>()(
       bookmarks: [],
       azkar: { morning: [], evening: [], afterPrayer: [], sleep: [] },
       setAzkar: (data) => set({ azkar: data }),
+      dailyHadiths: { hadiths: [], date: "" },
+      setDailyHadiths: (hadiths, date) =>
+        set({ dailyHadiths: { hadiths, date } }),
       lastResetDate: "",
       setLastResetDate: (date) => set({ lastResetDate: date }),
       prayerTimes: null,
@@ -146,14 +149,12 @@ export const useAppStore = create<AppState>()(
     {
       name: "werd-storage",
       partialize: (state) => ({
-        user: { ...state.user },
-        bookmarks: [...state.bookmarks],
-        azkar: { ...state.azkar },
-        misbaha: {
-          ...state.misbaha,
-          sessions: [...state.misbaha.sessions],
-        },
-        dailyVerseState: { ...state.dailyVerseState },
+        user: state.user,
+        bookmarks: state.bookmarks,
+        azkar: state.azkar,
+        dailyHadiths: state.dailyHadiths,
+        misbaha: state.misbaha,
+        dailyVerseState: state.dailyVerseState,
         lastResetDate: state.lastResetDate,
         prayerTimes: state.prayerTimes,
         location: state.location,
