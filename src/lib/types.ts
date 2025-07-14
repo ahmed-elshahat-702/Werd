@@ -4,10 +4,27 @@ export interface User {
 }
 
 export interface Surah {
-  id: number;
-  name_simple: string;
-  name_arabic: string;
-  verses_count: number;
+  number: number;
+  name: string;
+  englishName: string;
+  englishNameTranslation: string;
+  revelationType: string;
+  numberOfAyahs: number;
+  ayahs: Verse[];
+}
+
+export interface Verse {
+  number: number;
+  text: string;
+  numberInSurah: number;
+  juz: number;
+  manzil: number;
+  page: number;
+  ruku: number;
+  hizbQuarter: number;
+  sajda: boolean;
+  audio: string;
+  audioSecondary: string[];
 }
 
 export interface Book {

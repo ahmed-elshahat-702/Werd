@@ -1,266 +1,448 @@
-// "use client"
+"use client";
 
-// import { useEffect, useState } from "react"
-// import { motion } from "framer-motion"
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-// import { Separator } from "@/components/ui/separator"
-// import { Badge } from "@/components/ui/badge"
-// import { Play, Pause, Search, BookOpen } from "lucide-react"
-// import { useAppStore } from "@/lib/store"
+import AppHeader from "@/components/layout/app-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset } from "@/components/ui/sidebar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAppStore } from "@/lib/store";
+import { Surah, Verse } from "@/lib/types";
+import { motion } from "framer-motion";
+import { BookOpen, Pause, Play, Search, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 
-// interface Surah {
-//   id: number
-//   name_simple: string
-//   name_arabic: string
-//   verses_count: number
-//   revelation_place: string
-// }
+// Interface for recitation data
+interface Recitation {
+  identifier: string;
+  language: string;
+  name: string;
+  englishName: string;
+  format: string;
+  type: string;
+  direction: string | null;
+}
 
-// interface Verse {
-//   id: number
-//   verse_number: number
-//   text_uthmani: string
-// }
+export default function QuranPage() {
+  const { selectedSurah, setSurah, isHandling, setIsHandling } = useAppStore();
+  const [surahs, setSurahs] = useState<Surah[]>([]);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [versesLoading, setVersesLoading] = useState(false);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
+    null
+  );
+  const [recitations, setRecitations] = useState<Recitation[]>([]);
+  const [selectedRecitation, setSelectedRecitation] =
+    useState<string>("ar.alafasy");
+  const [recitationsLoading, setRecitationsLoading] = useState(false);
 
-// export default function QuranPage() {
-//   const { selectedSurah, setSurah } = useAppStore()
-//   const [surahs, setSurahs] = useState<Surah[]>([])
-//   const [verses, setVerses] = useState<Verse[]>([])
-//   const [searchTerm, setSearchTerm] = useState("")
-//   const [loading, setLoading] = useState(true)
-//   const [versesLoading, setVersesLoading] = useState(false)
-//   const [audioPlaying, setAudioPlaying] = useState(false)
-//   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
+  // Fetch recitations on component mount
+  useEffect(() => {
+    setRecitationsLoading(true);
+    fetch("https://api.alquran.cloud/v1/edition?format=audio")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (data.data) {
+          setRecitations(data.data);
+        }
+        setRecitationsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Fetch recitations error:", error);
+        setRecitations([]);
+        setRecitationsLoading(false);
+      });
+  }, []);
 
-//   useEffect(() => {
-//     // Fetch list of surahs
-//     fetch("https://api.quran.com/v4/chapters")
-//       .then((res) => res.json())
-//       .then((data) => {
-//         if (data.chapters) {
-//           setSurahs(data.chapters)
-//         }
-//         setLoading(false)
-//       })
-//       .catch(() => {
-//         // Fallback data
-//         setSurahs([
-//           { id: 1, name_simple: "Al-Fatihah", name_arabic: "الفاتحة", verses_count: 7, revelation_place: "makkah" },
-//           { id: 2, name_simple: "Al-Baqarah", name_arabic: "البقرة", verses_count: 286, revelation_place: "madinah" },
-//           { id: 3, name_simple: "Ali 'Imran", name_arabic: "آل عمران", verses_count: 200, revelation_place: "madinah" },
-//         ])
-//         setLoading(false)
-//       })
-//   }, [])
+  useEffect(() => {
+    fetch("https://api.alquran.cloud/v1/surah")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (data.data) {
+          setSurahs(data.data);
+        }
+        setIsHandling(false);
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error);
+        setSurahs([]);
+        setIsHandling(false);
+      });
+  }, [setIsHandling]);
 
-//   const handleSurahClick = async (surah: Surah) => {
-//     setSurah(surah)
-//     setVersesLoading(true)
+  const handleSurahClick = async (surah: Surah) => {
+    setSurah(surah);
+    setVersesLoading(true);
+    try {
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surah.number}/ar.uthmani`
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      if (data.data.ayahs) {
+        setVerses(
+          data.data.ayahs.map((ayah: Verse) => ({
+            number: ayah.number,
+            text: ayah.text,
+            numberInSurah: ayah.numberInSurah,
+            juz: ayah.juz,
+            manzil: ayah.manzil,
+            page: ayah.page,
+            ruku: ayah.ruku,
+            hizbQuarter: ayah.hizbQuarter,
+            sajda: ayah.sajda,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setVerses([]);
+    }
+    setVersesLoading(false);
+  };
 
-//     try {
-//       const response = await fetch(`https://api.quran.com/v4/quran/verses/uthmani?chapter_number=${surah.id}`)
-//       const data = await response.json()
-//       if (data.verses) {
-//         setVerses(data.verses)
-//       }
-//     } catch (error) {
-//       // Fallback verses for Al-Fatihah
-//       if (surah.id === 1) {
-//         setVerses([
-//           { id: 1, verse_number: 1, text_uthmani: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
-//           { id: 2, verse_number: 2, text_uthmani: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ" },
-//           { id: 3, verse_number: 3, text_uthmani: "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
-//         ])
-//       }
-//     }
-//     setVersesLoading(false)
-//   }
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
+    setAudioPlaying(false);
+  };
 
-//   const playAudio = (surahId: number) => {
-//     if (currentAudio) {
-//       currentAudio.pause()
-//       setCurrentAudio(null)
-//       setAudioPlaying(false)
-//     }
+  const playAudio = async (surahId: number) => {
+    if (audioPlaying && currentAudio) {
+      currentAudio.pause();
+      setAudioPlaying(false);
+      return;
+    }
 
-//     const audio = new Audio(`https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahId}.mp3`)
-//     audio
-//       .play()
-//       .then(() => {
-//         setCurrentAudio(audio)
-//         setAudioPlaying(true)
-//       })
-//       .catch(() => {
-//         console.log("Audio playback failed")
-//       })
+    if (currentAudio && !audioPlaying) {
+      currentAudio
+        .play()
+        .then(() => {
+          setAudioPlaying(true);
+        })
+        .catch(() => {
+          console.log("Audio playback failed");
+        });
+      return;
+    }
 
-//     audio.onended = () => {
-//       setAudioPlaying(false)
-//       setCurrentAudio(null)
-//     }
-//   }
+    try {
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surahId}/${selectedRecitation}`
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      if (!data.data.ayahs) throw new Error("No ayahs found");
 
-//   const filteredSurahs = surahs.filter(
-//     (surah) =>
-//       surah.name_simple.toLowerCase().includes(searchTerm.toLowerCase()) || surah.name_arabic.includes(searchTerm),
-//   )
+      const audioUrls = data.data.ayahs.map((ayah: Verse) => ayah.audio);
+      let currentIndex = 0;
 
-//   if (loading) {
-//     return (
-//       <SidebarInset>
-//         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-//           <SidebarTrigger className="-ml-1" />
-//           <Separator orientation="vertical" className="mr-2 h-4" />
-//           <h1 className="text-lg font-semibold">Qur&apos;an</h1>
-//         </header>
-//         <div className="flex-1 p-6">
-//           <div className="text-center">Loading...</div>
-//         </div>
-//       </SidebarInset>
-//     )
-//   }
+      const playNext = () => {
+        if (currentIndex >= audioUrls.length) {
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+          return;
+        }
 
-//   return (
-//     <SidebarInset>
-//       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-//         <SidebarTrigger className="-ml-1" />
-//         <Separator orientation="vertical" className="mr-2 h-4" />
-//         <div className="flex items-center gap-2">
-//           <BookOpen className="h-5 w-5" />
-//           <h1 className="text-lg font-semibold">Qur&apos;an</h1>
-//           <span className="text-sm arabic-text text-muted-foreground">القرآن الكريم</span>
-//         </div>
-//       </header>
+        const audio = new Audio(audioUrls[currentIndex]);
+        setCurrentAudio(audio);
+        setAudioPlaying(true);
 
-//       <div className="flex-1 p-6">
-//         <div className="grid gap-6 lg:grid-cols-2">
-//           {/* Surahs List */}
-//           <div className="space-y-4">
-//             <div className="space-y-2">
-//               <h2 className="text-xl font-semibold">Surahs</h2>
-//               <div className="relative">
-//                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-//                 <Input
-//                   placeholder="Search surahs..."
-//                   value={searchTerm}
-//                   onChange={(e) => setSearchTerm(e.target.value)}
-//                   className="pl-10"
-//                 />
-//               </div>
-//             </div>
+        audio.onended = () => {
+          currentIndex++;
+          playNext();
+        };
 
-//             <div className="space-y-2 max-h-[600px] overflow-y-auto">
-//               {filteredSurahs.map((surah, index) => (
-//                 <motion.div
-//                   key={surah.id}
-//                   initial={{ opacity: 0, y: 20 }}
-//                   animate={{ opacity: 1, y: 0 }}
-//                   transition={{ delay: index * 0.05 }}
-//                 >
-//                   <Card
-//                     className={`cursor-pointer transition-colors hover:bg-accent ${
-//                       selectedSurah?.id === surah.id ? "bg-accent" : ""
-//                     }`}
-//                     onClick={() => handleSurahClick(surah)}
-//                   >
-//                     <CardContent className="p-4">
-//                       <div className="flex items-center justify-between">
-//                         <div className="flex items-center gap-3">
-//                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-//                             {surah.id}
-//                           </div>
-//                           <div>
-//                             <div className="font-medium">{surah.name_simple}</div>
-//                             <div className="text-sm text-muted-foreground">{surah.verses_count} verses</div>
-//                           </div>
-//                         </div>
-//                         <div className="text-right">
-//                           <div className="arabic-text text-lg font-semibold">{surah.name_arabic}</div>
-//                           <Badge variant="outline" className="text-xs">
-//                             {surah.revelation_place}
-//                           </Badge>
-//                         </div>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                 </motion.div>
-//               ))}
-//             </div>
-//           </div>
+        audio.play().catch(() => {
+          console.log("Audio playback failed for verse", currentIndex + 1);
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+        });
+      };
 
-//           {/* Selected Surah Content */}
-//           <div className="space-y-4">
-//             {selectedSurah ? (
-//               <>
-//                 <Card>
-//                   <CardHeader>
-//                     <div className="flex items-center justify-between">
-//                       <div>
-//                         <CardTitle>{selectedSurah.name_simple}</CardTitle>
-//                         <CardDescription className="arabic-text text-lg">{selectedSurah.name_arabic}</CardDescription>
-//                       </div>
-//                       <Button onClick={() => playAudio(selectedSurah.id)} className="misbaha-button">
-//                         {audioPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-//                       </Button>
-//                     </div>
-//                   </CardHeader>
-//                 </Card>
+      playNext();
+    } catch (error) {
+      console.error("Audio fetch error:", error);
+      setAudioPlaying(false);
+      setCurrentAudio(null);
+    }
+  };
 
-//                 <Card>
-//                   <CardHeader>
-//                     <CardTitle>Verses</CardTitle>
-//                   </CardHeader>
-//                   <CardContent>
-//                     {versesLoading ? (
-//                       <div className="text-center py-8">Loading verses...</div>
-//                     ) : (
-//                       <div className="space-y-6">
-//                         {verses.map((verse, index) => (
-//                           <motion.div
-//                             key={verse.id}
-//                             initial={{ opacity: 0, y: 20 }}
-//                             animate={{ opacity: 1, y: 0 }}
-//                             transition={{ delay: index * 0.1 }}
-//                             className="space-y-2"
-//                           >
-//                             <div className="arabic-text text-xl leading-relaxed">{verse.text_uthmani}</div>
-//                             <div className="flex items-center gap-2">
-//                               <Badge variant="outline" className="text-xs">
-//                                 {verse.verse_number}
-//                               </Badge>
-//                             </div>
-//                             {index < verses.length - 1 && <Separator />}
-//                           </motion.div>
-//                         ))}
-//                       </div>
-//                     )}
-//                   </CardContent>
-//                 </Card>
-//               </>
-//             ) : (
-//               <Card>
-//                 <CardContent className="flex items-center justify-center py-12">
-//                   <div className="text-center space-y-2">
-//                     <BookOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-//                     <p className="text-muted-foreground">Select a surah to read</p>
-//                   </div>
-//                 </CardContent>
-//               </Card>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </SidebarInset>
-//   )
-// }
+  // Function to remove Arabic diacritics
+  function removeArabicDiacritics(text: string) {
+    const arabicDiacritics =
+      /[\u0610-\u061A\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g;
+    return text.replace(arabicDiacritics, "");
+  }
 
-import React from "react";
+  const filteredSurahs = surahs.filter(
+    (surah) =>
+      surah.englishName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      removeArabicDiacritics(surah.name).includes(
+        removeArabicDiacritics(searchTerm)
+      )
+  );
 
-const page = () => {
-  return <div>page</div>;
-};
+  const handleRecitationChange = (newRecitation: string) => {
+    // Stop current audio when changing recitation
+    stopAudio();
+    setSelectedRecitation(newRecitation);
+  };
 
-export default page;
+  // Get the current recitation name for display
+  const getCurrentRecitationName = () => {
+    const recitation = recitations.find(
+      (r) => r.identifier === selectedRecitation
+    );
+    return recitation?.englishName || "Alafasy";
+  };
+
+  if (isHandling) {
+    return (
+      <SidebarInset>
+        <AppHeader englishText="Qur'an" arabicText="القرآن الكريم" />
+
+        <div className="flex-1 p-6">
+          <div className="text-center">Loading...</div>
+        </div>
+      </SidebarInset>
+    );
+  }
+
+  return (
+    <SidebarInset>
+      <AppHeader englishText="Qur'an" arabicText="القرآن الكريم" />
+
+      <div className="flex-1 p-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Surahs List */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Surahs</h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search surahs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {filteredSurahs.length === 0 ? (
+                <div className="text-center text-muted-foreground">
+                  No surahs found
+                </div>
+              ) : (
+                filteredSurahs.map((surah, index) => (
+                  <motion.div
+                    key={surah.number}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card
+                      className={`cursor-pointer transition-colors hover:bg-accent ${
+                        selectedSurah?.number === surah.number
+                          ? "bg-accent"
+                          : ""
+                      }`}
+                      onClick={() => handleSurahClick(surah)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                              {surah.number}
+                            </div>
+                            <div>
+                              <div className="font-medium">
+                                {surah.englishName}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {surah.numberOfAyahs} verses
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="arabic-text text-lg font-semibold">
+                              {surah.name}
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {surah.revelationType}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Selected Surah Content */}
+          <div className="space-y-4">
+            {selectedSurah ? (
+              <>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>{selectedSurah.englishName}</CardTitle>
+                        <CardDescription className="arabic-text text-lg">
+                          {selectedSurah.name}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => playAudio(selectedSurah.number)}
+                          className="misbaha-button"
+                        >
+                          {audioPlaying ? (
+                            <Pause className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          onClick={stopAudio}
+                          variant="outline"
+                          size="default"
+                          disabled={!currentAudio && !audioPlaying}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Recitation
+                        </label>
+                        <Select
+                          value={selectedRecitation}
+                          onValueChange={handleRecitationChange}
+                          disabled={recitationsLoading}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a recitation">
+                              {recitationsLoading
+                                ? "Loading..."
+                                : getCurrentRecitationName()}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {recitations.map((recitation) => (
+                              <SelectItem
+                                key={recitation.identifier}
+                                value={recitation.identifier}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    {recitation.englishName}
+                                  </span>
+                                  {recitation.name !==
+                                    recitation.englishName && (
+                                    <span className="text-xs text-muted-foreground arabic-text">
+                                      {recitation.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {audioPlaying && (
+                        <div className="text-sm text-muted-foreground">
+                          Playing: {getCurrentRecitationName()}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Verses</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {versesLoading ? (
+                      <div className="text-center py-8">Loading verses...</div>
+                    ) : (
+                      <div className="space-y-6">
+                        {verses.map((verse, index) => (
+                          <motion.div
+                            key={verse.number}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="space-y-2"
+                          >
+                            <div className="arabic-text text-xl leading-relaxed">
+                              {verse.text}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {verse.numberInSurah}
+                              </Badge>
+                            </div>
+                            {index < verses.length - 1 && <Separator />}
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <div className="text-center space-y-2">
+                    <BookOpen className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      Select a surah to read
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </SidebarInset>
+  );
+}
