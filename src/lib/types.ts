@@ -27,6 +27,16 @@ export interface Verse {
   audioSecondary: string[];
 }
 
+export interface Recitation {
+  identifier: string;
+  language: string;
+  name: string;
+  englishName: string;
+  format: string;
+  type: string;
+  direction: string | null;
+}
+
 export interface Book {
   id: number;
   bookName: string;
