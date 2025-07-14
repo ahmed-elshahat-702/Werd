@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import AppHeader from "@/components/layout/app-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,17 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, MapPin, Sun, Moon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
 import { PrayerTimes } from "@/lib/types";
-import { toast } from "sonner";
 import { formatTo12Hour } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { MapPin, Moon, Sun } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 export default function PrayerTimesPage() {
   const {
@@ -281,17 +282,7 @@ export default function PrayerTimesPage() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-baseline gap-2">
-          <Clock className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Prayer Times</h1>
-          <span className="text-sm text-muted-foreground arabic-text">
-            أوقات الصلاة
-          </span>
-        </div>
-      </header>
+      <AppHeader englishText="Prayer Times" arabicText="أوقات الصلاة" />
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">

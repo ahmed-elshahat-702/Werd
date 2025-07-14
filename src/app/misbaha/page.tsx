@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import AppHeader from "@/components/layout/app-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,51 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { RotateCcw, Save, Clock } from "lucide-react";
+import { SidebarInset } from "@/components/ui/sidebar";
+import { commonMisbahaZikr } from "@/lib/consts";
 import { useAppStore } from "@/lib/store";
-
-const commonZikr = [
-  {
-    arabic: "سبحان الله",
-    transliteration: "Subhan Allah",
-    translation: "Glory be to Allah",
-  },
-  {
-    arabic: "الحمد لله",
-    transliteration: "Alhamdulillah",
-    translation: "Praise be to Allah",
-  },
-  {
-    arabic: "الله أكبر",
-    transliteration: "Allahu Akbar",
-    translation: "Allah is Greatest",
-  },
-  {
-    arabic: "لا إله إلا الله",
-    transliteration: "La ilaha illa Allah",
-    translation: "There is no god but Allah",
-  },
-  {
-    arabic: "استغفر الله",
-    transliteration: "Astaghfirullah",
-    translation: "I seek forgiveness from Allah",
-  },
-  {
-    arabic: "لا حول ولا قوة إلا بالله",
-    transliteration: "La hawla wa la quwwata illa billah",
-    translation: "There is no power except with Allah",
-  },
-  {
-    arabic: "اللهم صلي على سيدنا محمد",
-    transliteration: "Allahum salli ala saidena Muhammad",
-    translation: "The blessings of God to the Prophet Muhammad.",
-  },
-];
+import { motion } from "framer-motion";
+import { RotateCcw, Save } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function MisbahaPage() {
   const {
@@ -64,7 +27,7 @@ export default function MisbahaPage() {
     saveMisbahaSession,
   } = useAppStore();
 
-  const [selectedZikr, setSelectedZikr] = useState(commonZikr[0]);
+  const [selectedZikr, setSelectedZikr] = useState(commonMisbahaZikr[0]);
   const [customZikrInput, setCustomZikrInput] = useState("");
 
   useEffect(() => {
@@ -86,7 +49,7 @@ export default function MisbahaPage() {
     saveMisbahaSession();
   };
 
-  const handleZikrSelect = (zikr: (typeof commonZikr)[0]) => {
+  const handleZikrSelect = (zikr: (typeof commonMisbahaZikr)[0]) => {
     setSelectedZikr(zikr);
     setCustomZikr(zikr.arabic);
   };
@@ -112,17 +75,7 @@ export default function MisbahaPage() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-baseline gap-2">
-          <Clock className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Misbaha</h1>
-          <span className="text-sm arabic-text text-muted-foreground">
-            المسبحة
-          </span>
-        </div>
-      </header>
+      <AppHeader englishText="Misbaha" arabicText="المسبحة" />
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
@@ -217,7 +170,7 @@ export default function MisbahaPage() {
                 <CardTitle className="arabic-text">ذكر شائع</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {commonZikr.map((zikr, index) => (
+                {commonMisbahaZikr.map((zikr, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}

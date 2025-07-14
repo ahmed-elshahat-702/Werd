@@ -3,10 +3,10 @@
 import DailyHadithCard from "@/components/daily-hadith-card";
 import DailyVerseCard from "@/components/daily-verse-card";
 import GreetingCard from "@/components/greeting-card";
+import AppHeader from "@/components/layout/app-header";
 import NextPrayerCard from "@/components/next-prayer-card";
 import QuickActionsCard from "@/components/quick-actions-card";
-import { Separator } from "@/components/ui/separator";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { motion } from "framer-motion";
 
 export default function Dashboard() {
@@ -33,16 +33,7 @@ export default function Dashboard() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-          <span className="text-sm arabic-text text-muted-foreground">
-            الرئيسية
-          </span>
-        </div>
-      </header>
+      <AppHeader englishText="Dashboard" arabicText="الرئيسية" />
 
       <div className="flex-1 space-y-6 p-6">
         <motion.div

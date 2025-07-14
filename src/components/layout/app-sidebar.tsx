@@ -1,18 +1,9 @@
 "use client";
 
-import type * as React from "react";
-import {
-  BookOpen,
-  Home,
-  User,
-  Clock,
-  Heart,
-  Bookmark,
-  Settings,
-  Droplet,
-} from "lucide-react";
+import { Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type * as React from "react";
 
 import {
   Sidebar,
@@ -27,48 +18,10 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { sidebarMenuItems } from "@/lib/consts";
+import { Separator } from "../ui/separator";
 import Logo from "./logo";
 import ModeToggler from "./mode-toggler";
-import { Separator } from "../ui/separator";
-
-const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: Home,
-    arabic: "الرئيسية",
-  },
-  {
-    title: "Qur'an",
-    url: "/quran",
-    icon: BookOpen,
-    arabic: "القرآن",
-  },
-  {
-    title: "Hadith",
-    url: "/hadith",
-    icon: Bookmark,
-    arabic: "الحديث",
-  },
-  {
-    title: "Azkar",
-    url: "/azkar",
-    icon: Heart,
-    arabic: "الأذكار",
-  },
-  {
-    title: "Misbaha",
-    url: "/misbaha",
-    icon: Droplet,
-    arabic: "المسبحة",
-  },
-  {
-    title: "Prayer Times",
-    url: "/prayer-times",
-    icon: Clock,
-    arabic: "أوقات الصلاة",
-  },
-];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -83,7 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {sidebarMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link href={item.url}>
