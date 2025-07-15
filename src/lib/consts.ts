@@ -1,5 +1,5 @@
 import {
-  Bookmark,
+  // Bookmark,
   BookOpen,
   Clock,
   Droplet,
@@ -25,12 +25,12 @@ export const sidebarMenuItems = [
     icon: BookOpen,
     arabic: "القرآن",
   },
-  {
-    title: "Hadith",
-    url: "/hadith",
-    icon: Bookmark,
-    arabic: "الحديث",
-  },
+  // {
+  //   title: "Hadith",
+  //   url: "/hadith",
+  //   icon: Bookmark,
+  //   arabic: "الحديث",
+  // },
   {
     title: "Azkar",
     url: "/azkar",

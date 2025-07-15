@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, User } from "lucide-react";
+// import { Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -27,7 +27,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
 
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar {...props}>
       <SidebarHeader>
         <Logo />
       </SidebarHeader>
@@ -59,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <ModeToggler />
             <Separator />
           </SidebarMenuItem>
-          <SidebarMenuItem>
+          {/*   <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "profile"}>
               <Link href={"/profile"}>
                 <User />
@@ -80,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </span>
               </Link>
             </SidebarMenuButton>
-          </SidebarMenuItem>
+          </SidebarMenuItem> */}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />

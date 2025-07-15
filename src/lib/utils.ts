@@ -13,3 +13,12 @@ export const formatTo12Hour = (time: string) => {
   hour = hour % 12 || 12;
   return `${hour}:${minute} ${ampm}`;
 };
+
+export const convertToArabicNumber = (number: number | string) => {
+  const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+  return number
+    .toString()
+    .split("")
+    .map((digit) => arabicNumbers[parseInt(digit)])
+    .join("");
+};

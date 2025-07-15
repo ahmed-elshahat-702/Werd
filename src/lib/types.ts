@@ -143,7 +143,8 @@ export interface PrayerTimes {
 
 export interface AppState {
   user: User;
-  selectedSurah: Surah | null;
+  surahs: Surah[];
+  setSurahs: (surahs: Surah[]) => void;
   bookmarks: Bookmark[];
   azkar: Record<AzkarCategory, ZikrItem[]>;
   setAzkar: (data: Record<AzkarCategory, ZikrItem[]>) => void;
@@ -178,7 +179,6 @@ export interface AppState {
     surahId: number,
     ayahNumber: number
   ) => void;
-  setSurah: (surah: Surah) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
   incrementMisbaha: () => void;

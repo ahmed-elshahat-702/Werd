@@ -147,7 +147,7 @@ const DailyHadithCard = ({ itemVariants }: { itemVariants: Variants }) => {
                 {hadiths.map((_, index) => (
                   <button
                     key={index}
-                    className={`w-2 md:w-3 h-2 md:h-3 rounded-full ${
+                    className={`w-1.5 h-1.5 md:w-3 md:h-3 rounded-full ${
                       currentSlide === index ? "bg-blue-600" : "bg-gray-300"
                     }`}
                     onClick={() => api?.scrollTo(index)}

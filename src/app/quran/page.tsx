@@ -1,226 +1,96 @@
 "use client";
 
 import AppHeader from "@/components/layout/app-header";
+import { Input } from "@/components/ui/input";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useAppStore } from "@/lib/store";
-import {
-  EnhancedVerse,
-  PageData,
-  Recitation,
-  Surah,
-  Verse,
-  ViewMode,
-} from "@/lib/types";
-import { useCallback, useEffect, useRef, useState } from "react";
-import SelectedsurahContent from "./selected-surah-content";
-import SurahsSidebar from "./surahs-sidebar";
+import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import SurahCard from "./surah-card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function QuranPage() {
-  const { selectedSurah, isHandling, setSurah } = useAppStore();
-  const [verses, setVerses] = useState<EnhancedVerse[]>([]);
-  const [versesLoading, setVersesLoading] = useState(false);
+  const { setIsHandling, isHandling, surahs, setSurahs } = useAppStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [fetchError, setFetchError] = useState(false);
 
-  const [recitations, setRecitations] = useState<Recitation[]>([]);
-  const [selectedRecitation, setSelectedRecitation] =
-    useState<string>("ar.alafasy");
-  const [recitationsLoading, setRecitationsLoading] = useState(false);
-
-  // New states for enhanced features
-  const [viewMode, setViewMode] = useState<ViewMode>("cards");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pages, setPages] = useState<PageData[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-
-  // Infinite scroll
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const lastElementRef = useRef<HTMLDivElement | null>(null);
-
-  // Fetch recitations on component mount
   useEffect(() => {
-    setRecitationsLoading(true);
-    fetch("https://api.alquran.cloud/v1/edition?format=audio")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (data.data) {
-          setRecitations(data.data);
+    const fetchSurahs = async () => {
+      setIsHandling(true);
+      setFetchError(false);
+      try {
+        const response = await fetch("https://api.alquran.cloud/v1/surah");
+        const data = await response.json();
+
+        if (data?.data?.length) {
+          setSurahs(data.data);
+        } else {
+          throw new Error("Invalid API response");
         }
-        setRecitationsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Fetch recitations error:", error);
-        setRecitations([]);
-        setRecitationsLoading(false);
-      });
-  }, []);
-
-  // Function to create pages from verses
-  const createPagesFromVerses = (
-    verses: EnhancedVerse[],
-    versesPerPage: number = 10
-  ) => {
-    const pages: PageData[] = [];
-    for (let i = 0; i < verses.length; i += versesPerPage) {
-      pages.push({
-        number: Math.floor(i / versesPerPage) + 1,
-        verses: verses.slice(i, i + versesPerPage),
-      });
-    }
-    return pages;
-  };
-
-  // Function to fetch verses with translation
-  const fetchVersesWithTranslation = async (surahNumber: number) => {
-    try {
-      const [arabicResponse, translationResponse, audioResponse] =
-        await Promise.all([
-          fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.uthmani`),
-          fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.sahih`),
-          fetch(
-            `https://api.alquran.cloud/v1/surah/${surahNumber}/${selectedRecitation}`
-          ),
-        ]);
-
-      if (!arabicResponse.ok || !translationResponse.ok || !audioResponse.ok) {
-        throw new Error("Failed to fetch surah data");
-      }
-
-      const [arabicData, translationData, audioData] = await Promise.all([
-        arabicResponse.json(),
-        translationResponse.json(),
-        audioResponse.json(),
-      ]);
-
-      const enhancedVerses: EnhancedVerse[] = arabicData.data.ayahs.map(
-        (ayah: Verse, index: number) => ({
-          number: ayah.number,
-          text: ayah.text,
-          numberInSurah: ayah.numberInSurah,
-          juz: ayah.juz,
-          manzil: ayah.manzil,
-          page: ayah.page,
-          ruku: ayah.ruku,
-          hizbQuarter: ayah.hizbQuarter,
-          sajda: ayah.sajda,
-          translation: translationData.data.ayahs[index]?.text || "",
-          audioUrl: audioData.data.ayahs[index]?.audio || "",
-        })
-      );
-
-      return enhancedVerses;
-    } catch (error) {
-      console.error("Error fetching verses:", error);
-      return [];
-    }
-  };
-
-  const handleSurahClick = async (surah: Surah) => {
-    setSurah(surah);
-    setVersesLoading(true);
-    setCurrentPage(1);
-    setPages([]);
-    setHasMore(true);
-
-    try {
-      const enhancedVerses = await fetchVersesWithTranslation(surah.number);
-      setVerses(enhancedVerses);
-
-      if (viewMode === "mushaf") {
-        const pagesData = createPagesFromVerses(enhancedVerses, 10);
-        setPages(pagesData);
-        setTotalPages(pagesData.length);
-      } else {
-        const firstBatch = enhancedVerses.slice(0, 10);
-        setPages([{ number: 1, verses: firstBatch }]);
-        setHasMore(enhancedVerses.length > 10);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      setVerses([]);
-    }
-    setVersesLoading(false);
-  };
-  // Load more verses for infinite scroll
-  const loadMoreVerses = useCallback(() => {
-    if (loadingMore || !hasMore || !selectedSurah) return;
-
-    setLoadingMore(true);
-
-    setTimeout(() => {
-      const nextStartIndex = pages.reduce(
-        (total, page) => total + page.verses.length,
-        0
-      );
-      const nextBatch = verses.slice(nextStartIndex, nextStartIndex + 10);
-
-      if (nextBatch.length > 0) {
-        setPages((prev) => [
-          ...prev,
-          { number: prev.length + 1, verses: nextBatch },
-        ]);
-        setHasMore(nextStartIndex + 10 < verses.length);
-      } else {
-        setHasMore(false);
-      }
-
-      setLoadingMore(false);
-    }, 1000);
-  }, [loadingMore, hasMore, selectedSurah, pages, verses]);
-
-  // Setup intersection observer for infinite scroll
-  useEffect(() => {
-    if (viewMode !== "cards") return;
-
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadMoreVerses();
-        }
-      },
-      { threshold: 1.0 }
-    );
-
-    if (lastElementRef.current) {
-      observerRef.current.observe(lastElementRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
+      } catch (error) {
+        console.error("Surah fetch error:", error);
+        toast.error("تعذر تحميل السور. تحقق من اتصالك بالإنترنت.");
+        setSurahs([]);
+        setFetchError(true);
+      } finally {
+        setIsHandling(false);
       }
     };
-  }, [viewMode, hasMore, loadingMore, loadMoreVerses]);
 
-  // Handle view mode change
-  useEffect(() => {
-    if (selectedSurah && verses.length > 0) {
-      if (viewMode === "mushaf") {
-        const pagesData = createPagesFromVerses(verses, 10);
-        setPages(pagesData);
-        setTotalPages(pagesData.length);
-        setCurrentPage(1);
-      } else {
-        const firstBatch = verses.slice(0, 10);
-        setPages([{ number: 1, verses: firstBatch }]);
-        setHasMore(verses.length > 10);
-      }
+    if (!surahs || surahs.length === 0) {
+      fetchSurahs();
     }
-  }, [viewMode, selectedSurah, verses]);
+  }, [surahs, setIsHandling, setSurahs]);
+
+  function removeArabicDiacritics(text: string) {
+    const arabicDiacritics =
+      /[\u0610-\u061A\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g;
+    return text.replace(arabicDiacritics, "");
+  }
+
+  const filteredSurahs = useMemo(() => {
+    if (!searchTerm.trim()) return surahs;
+    return surahs.filter(
+      (surah) =>
+        surah.englishName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        removeArabicDiacritics(surah.name).includes(
+          removeArabicDiacritics(searchTerm)
+        )
+    );
+  }, [searchTerm, surahs]);
 
   if (isHandling) {
     return (
       <SidebarInset>
         <AppHeader englishText="Qur'an" arabicText="القرآن الكريم" />
-        <div className="flex-1 p-6">
-          <div className="text-center">Loading...</div>
+        <div className="flex-1 p-6 space-y-8">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div
+            dir="rtl"
+            className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+          >
+            {[...Array(12)].map((_, index) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </SidebarInset>
     );
@@ -229,32 +99,42 @@ export default function QuranPage() {
   return (
     <SidebarInset>
       <AppHeader englishText="Qur'an" arabicText="القرآن الكريم" />
-      <div className="flex-1 p-6 flex">
-        {/* Selected Surah Content */}
-        <SelectedsurahContent
-          versesLoading={versesLoading}
-          setSelectedRecitation={setSelectedRecitation}
-          recitations={recitations}
-          recitationsLoading={recitationsLoading}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          handleSurahClick={handleSurahClick}
-          selectedRecitation={selectedRecitation}
-          setCurrentPage={setCurrentPage}
-          verses={verses}
-          pages={pages}
-          hasMore={hasMore}
-          lastElementRef={lastElementRef}
-          loadingMore={loadingMore}
-        />
+      <div className="flex-1 min-h-screen p-6 w-full space-y-8">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold arabic-text">السور</h2>
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              dir="rtl"
+              placeholder="إبحث عن سورة..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+              aria-label="ابحث عن سورة"
+            />
+          </div>
+        </div>
 
-        {/* Surahs Sidebar */}
-        <SurahsSidebar
-          handleSurahClick={handleSurahClick}
-          selectedSurah={selectedSurah}
-        />
+        {fetchError ? (
+          <div className="text-center text-red-500 arabic-text">
+            حدث خطأ أثناء تحميل السور. يرجى المحاولة لاحقًا.
+          </div>
+        ) : (
+          <div
+            dir="rtl"
+            className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+          >
+            {filteredSurahs.length === 0 ? (
+              <div className="text-center text-muted-foreground arabic-text">
+                لم يتم العثور على السورة
+              </div>
+            ) : (
+              filteredSurahs.map((surah, index) => (
+                <SurahCard key={surah.number} surah={surah} index={index} />
+              ))
+            )}
+          </div>
+        )}
       </div>
     </SidebarInset>
   );

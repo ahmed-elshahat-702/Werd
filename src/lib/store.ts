@@ -9,7 +9,8 @@ export const useAppStore = create<AppState>()(
         name: "أخي الكريم",
         location: "Cairo, Egypt",
       },
-      selectedSurah: null,
+      surahs: [],
+      setSurahs: (data) => set({ surahs: data }),
       bookmarks: [],
       azkar: { morning: [], evening: [], afterPrayer: [], sleep: [] },
       setAzkar: (data) => set({ azkar: data }),
@@ -102,7 +103,6 @@ export const useAppStore = create<AppState>()(
           lastResetDate: new Date().toDateString(),
         }));
       },
-      setSurah: (surah) => set({ selectedSurah: surah }),
       addBookmark: (bookmark) =>
         set((state) => ({
           bookmarks: [...state.bookmarks, bookmark],
@@ -150,6 +150,7 @@ export const useAppStore = create<AppState>()(
       name: "werd-storage",
       partialize: (state) => ({
         user: state.user,
+        surahs: state.surahs,
         bookmarks: state.bookmarks,
         azkar: state.azkar,
         dailyHadiths: state.dailyHadiths,
