@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -403,6 +411,21 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
 
   return (
     <div className="flex-1 min-h-screen p-6 w-full space-y-8">
+      <Breadcrumb dir="rtl" className="arabic-text">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">الرئيسية</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="rotate-180" />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/quran">القرءان الكريم</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="rotate-180" />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{surah.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
