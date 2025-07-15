@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import AppHeader from "@/components/layout/app-header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const amiri = Amiri({
@@ -40,7 +41,10 @@ export default function RootLayout({
         >
           <SidebarProvider>
             <AppSidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto mt-16">
+              <AppHeader />
+              {children}
+            </main>
             <Toaster />
           </SidebarProvider>
         </ThemeProvider>

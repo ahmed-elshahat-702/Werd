@@ -1,6 +1,5 @@
 "use client";
 
-import AppHeader from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SidebarInset } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/lib/store";
 import {
@@ -30,17 +29,24 @@ import {
 import { BookOpenCheck, Grid3X3, Pause, Play, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import CardsView from "./cards-view";
 import MushafView from "./mushaf-view";
 
 const useSurahData = (surahId: string) => {
-  const { setIsHandling } = useAppStore();
+  const { setIsHandling, setHeaderArabicTitle, setHeaderEnglishTitle } =
+    useAppStore();
   const [surah, setSurah] = useState<Surah | null>(null);
   const [verses, setVerses] = useState<EnhancedVerse[]>([]);
   const [versesLoading, setVersesLoading] = useState(false);
   const [recitations, setRecitations] = useState<Recitation[]>([]);
   const [recitationsLoading, setRecitationsLoading] = useState(false);
+
+  useEffect(() => {
+    if (surah) {
+      setHeaderArabicTitle(surah.name);
+      setHeaderEnglishTitle(surah.englishName);
+    }
+  }, [setHeaderArabicTitle, setHeaderEnglishTitle, surah]);
 
   useEffect(() => {
     if (!surahId || isNaN(Number(surahId))) return;
@@ -339,203 +345,198 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
 
   if (!surah || versesLoading) {
     return (
-      <SidebarInset>
-        <div className="flex-1 p-6 space-y-8">
-          <Skeleton className="h-10 w-64" />
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {[...Array(3)].map((_, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Skeleton className="h-6 w-3/4" />
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-12" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-px w-full" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </SidebarInset>
-    );
-  }
-
-  return (
-    <SidebarInset>
-      <AppHeader englishText={surah.englishName} arabicText={surah.name} />
-      <div className="flex-1 min-h-screen p-6 w-full space-y-8">
+      <div className="flex-1 p-6 space-y-8">
+        <Skeleton className="h-10 w-64" />
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{surah.englishName}</CardTitle>
-                <CardDescription className="arabic-text text-lg">
-                  {surah.name}
-                </CardDescription>
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-5 w-32" />
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={playAudio} className="misbaha-button">
-                  {audioPlaying ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  onClick={stopAudio}
-                  variant="outline"
-                  disabled={!currentAudio && !audioPlaying && !playingVerseId}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-10 w-10 rounded-full" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Recitation</label>
-                <Select
-                  value={selectedRecitation}
-                  onValueChange={setSelectedRecitation}
-                  disabled={recitationsLoading}
-                >
-                  <SelectTrigger className="w-full h-fit py-8 border-muted rounded-xl shadow-sm focus:ring-2 focus:ring-primary transition">
-                    <SelectValue
-                      placeholder={
-                        recitationsLoading
-                          ? "جاري التحميل..."
-                          : currentRecitationName
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg bg-background">
-                    {recitations.map((recitation) => (
-                      <SelectItem
-                        key={recitation.identifier}
-                        value={recitation.identifier}
-                        className="py-3 px-4 hover:bg-muted/50 transition-all rounded-md"
-                      >
-                        <div className="flex flex-col text-start">
-                          <span className="font-semibold text-sm text-foreground">
-                            {recitation.englishName}
-                          </span>
-                          {recitation.name !== recitation.englishName && (
-                            <span className="text-xs text-muted-handling arabic-text mt-0.5">
-                              {recitation.name}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-12 w-full" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">View Mode</label>
-                <Tabs
-                  value={viewMode}
-                  onValueChange={(value) => setViewMode(value as ViewMode)}
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger
-                      value="cards"
-                      className="flex items-center gap-2"
-                    >
-                      <Grid3X3 className="h-4 w-4" /> Cards
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="mushaf"
-                      className="flex items-center gap-2"
-                    >
-                      <BookOpenCheck className="h-4 w-4" /> Mushaf
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              {(audioPlaying || playingVerseId) && (
-                <div className="text-sm text-muted-foreground">
-                  {audioPlaying && `Playing: ${currentRecitationName}`}
-                  {playingVerseId &&
-                    `Playing verse: ${
-                      verses.find((v) => v.number === playingVerseId)
-                        ?.numberInSurah
-                    }`}
+                <Skeleton className="h-4 w-24" />
+                <div className="grid grid-cols-2 gap-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            {viewMode === "cards" ? (
-              <CardTitle>Verses</CardTitle>
-            ) : (
-              <div className="flex justify-between items-center">
-                <CardTitle>Mushaf View</CardTitle>
-              </div>
-            )}
+            <Skeleton className="h-6 w-32" />
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {viewMode === "cards" ? (
-                <CardsView
-                  pages={pages}
-                  playingVerseId={playingVerseId}
-                  playIndividualVerse={playIndividualVerse}
-                />
-              ) : (
-                <MushafView
-                  pages={pages}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  goToPage={goToPage}
-                  playingVerseId={playingVerseId}
-                  playIndividualVerse={playIndividualVerse}
-                />
-              )}
+              {[...Array(3)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-6 w-3/4" />
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-px w-full" />
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
-    </SidebarInset>
+    );
+  }
+
+  return (
+    <div className="flex-1 min-h-screen p-6 w-full space-y-8">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>{surah.englishName}</CardTitle>
+              <CardDescription className="arabic-text text-lg">
+                {surah.name}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={playAudio} className="misbaha-button">
+                {audioPlaying ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                onClick={stopAudio}
+                variant="outline"
+                disabled={!currentAudio && !audioPlaying && !playingVerseId}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Recitation</label>
+              <Select
+                value={selectedRecitation}
+                onValueChange={setSelectedRecitation}
+                disabled={recitationsLoading}
+              >
+                <SelectTrigger className="w-full h-fit py-8 border-muted rounded-xl shadow-sm focus:ring-2 focus:ring-primary transition">
+                  <SelectValue
+                    placeholder={
+                      recitationsLoading
+                        ? "جاري التحميل..."
+                        : currentRecitationName
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl shadow-lg bg-background">
+                  {recitations.map((recitation) => (
+                    <SelectItem
+                      key={recitation.identifier}
+                      value={recitation.identifier}
+                      className="py-3 px-4 hover:bg-muted/50 transition-all rounded-md"
+                    >
+                      <div className="flex flex-col text-start">
+                        <span className="font-semibold text-sm text-foreground">
+                          {recitation.englishName}
+                        </span>
+                        {recitation.name !== recitation.englishName && (
+                          <span className="text-xs text-muted-handling arabic-text mt-0.5">
+                            {recitation.name}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">View Mode</label>
+              <Tabs
+                value={viewMode}
+                onValueChange={(value) => setViewMode(value as ViewMode)}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger
+                    value="cards"
+                    className="flex items-center gap-2"
+                  >
+                    <Grid3X3 className="h-4 w-4" /> Cards
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="mushaf"
+                    className="flex items-center gap-2"
+                  >
+                    <BookOpenCheck className="h-4 w-4" /> Mushaf
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            {(audioPlaying || playingVerseId) && (
+              <div className="text-sm text-muted-foreground">
+                {audioPlaying && `Playing: ${currentRecitationName}`}
+                {playingVerseId &&
+                  `Playing verse: ${
+                    verses.find((v) => v.number === playingVerseId)
+                      ?.numberInSurah
+                  }`}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          {viewMode === "cards" ? (
+            <CardTitle>Verses</CardTitle>
+          ) : (
+            <div className="flex justify-between items-center">
+              <CardTitle>Mushaf View</CardTitle>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {viewMode === "cards" ? (
+              <CardsView
+                pages={pages}
+                playingVerseId={playingVerseId}
+                playIndividualVerse={playIndividualVerse}
+              />
+            ) : (
+              <MushafView
+                pages={pages}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                goToPage={goToPage}
+                playingVerseId={playingVerseId}
+                playIndividualVerse={playIndividualVerse}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

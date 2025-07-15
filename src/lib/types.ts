@@ -143,6 +143,10 @@ export interface PrayerTimes {
 
 export interface AppState {
   user: User;
+  headerArabicTitle: string;
+  headerEnglishTitle: string;
+  setHeaderArabicTitle: (title: string) => void;
+  setHeaderEnglishTitle: (title: string) => void;
   surahs: Surah[];
   setSurahs: (surahs: Surah[]) => void;
   bookmarks: Bookmark[];

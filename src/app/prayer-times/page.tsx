@@ -1,6 +1,5 @@
 "use client";
 
-import AppHeader from "@/components/layout/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
 import { PrayerTimes } from "@/lib/types";
@@ -30,6 +29,8 @@ export default function PrayerTimesPage() {
     setLocation,
     isHandling,
     setIsHandling,
+    setHeaderArabicTitle,
+    setHeaderEnglishTitle,
   } = useAppStore();
   const [currentPrayer, setCurrentPrayer] = useState<string | undefined>("");
   const [nextPrayer, setNextPrayer] = useState<string | undefined>("");
@@ -42,6 +43,11 @@ export default function PrayerTimesPage() {
     country: location.split(",")[1]?.trim() || "",
   });
   const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    setHeaderArabicTitle("أوقات الصلاة");
+    setHeaderEnglishTitle("Prayer Times");
+  }, [setHeaderArabicTitle, setHeaderEnglishTitle]);
 
   useEffect(() => {
     const fetchPrayerTimes = async () => {
@@ -243,7 +249,7 @@ export default function PrayerTimesPage() {
 
   if (isHandling || !prayerTimes) {
     return (
-      <SidebarInset>
+      <>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
@@ -276,195 +282,189 @@ export default function PrayerTimesPage() {
             />
           </div>
         </div>
-      </SidebarInset>
+      </>
     );
   }
 
   return (
-    <SidebarInset>
-      <AppHeader englishText="Prayer Times" arabicText="أوقات الصلاة" />
-
-      <div className="flex-1 p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 arabic-text">
-                    <MapPin className="h-5 w-5" />
-                    الموقع
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div dir="rtl" className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={locationInput.city}
-                        onChange={(e) =>
-                          setLocationInput({
-                            ...locationInput,
-                            city: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
-                          })
-                        }
-                        placeholder="Enter city name"
-                        aria-label="City name for prayer times"
-                      />
-                      <Input
-                        value={locationInput.country}
-                        onChange={(e) =>
-                          setLocationInput({
-                            ...locationInput,
-                            country: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
-                          })
-                        }
-                        placeholder="Enter country name"
-                        aria-label="Country name for prayer times"
-                      />
-                      <Button onClick={handleLocationChange}>تحديث</Button>
-                    </div>
-                    {error && (
-                      <p className="text-sm text-red-500 arabic-text">
-                        {error}
-                      </p>
-                    )}
-                    <p className="text-lg arabic-text">{location}</p>
-                    <p className="text-sm text-muted-foreground arabic-text">
-                      {new Date().toLocaleDateString("ar-EG", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
+    <div className="flex-1 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 arabic-text">
+                  <MapPin className="h-5 w-5" />
+                  الموقع
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div dir="rtl" className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={locationInput.city}
+                      onChange={(e) =>
+                        setLocationInput({
+                          ...locationInput,
+                          city: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
+                        })
+                      }
+                      placeholder="Enter city name"
+                      aria-label="City name for prayer times"
+                    />
+                    <Input
+                      value={locationInput.country}
+                      onChange={(e) =>
+                        setLocationInput({
+                          ...locationInput,
+                          country: e.target.value.replace(/[^a-zA-Z\s]/g, ""),
+                        })
+                      }
+                      placeholder="Enter country name"
+                      aria-label="Country name for prayer times"
+                    />
+                    <Button onClick={handleLocationChange}>تحديث</Button>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="prayer-card">
-                <CardHeader>
-                  <CardTitle className="arabic-text">الصلاة التالية</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold arabic-text">
-                        {nextPrayer}
-                      </div>
-                      <div className="text-lg text-muted-foreground arabic-text">
-                        {prayerInfo.find((p) => p.english === nextPrayer)?.name}
-                      </div>
-                    </div>
-                    <motion.div className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {countdown}
-                    </motion.div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {prayerInfo.map((prayer, index) => (
-              <motion.div
-                key={prayer.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card
-                  dir="rtl"
-                  className={`${
-                    currentPrayer === prayer.english
-                      ? "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950"
-                      : ""
-                  } ${prayer.english === "Sunrise" ? "opacity-60" : ""}`}
-                  role="region"
-                  aria-label={`بطاقة وقت صلاة ${prayer.name}`}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {prayer.icon}
-                        <span className="arabic-text">{prayer.name}</span>
-                      </div>
-                      {currentPrayer === prayer.english && (
-                        <Badge className="bg-emerald-500 arabic-text">
-                          الحالية
-                        </Badge>
-                      )}
-                      {nextPrayer === prayer.english && (
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-500 text-emerald-600 arabic-text"
-                        >
-                          التالية
-                        </Badge>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold font-mono">
-                        {formatTo12Hour(prayer.time)}
-                      </div>
-                      <div className="text-lg text-muted-foreground">
-                        {prayer.english}
-                      </div>
-                      <div className="text-xs text-muted-foreground arabic-text">
-                        {prayer.description}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                  {error && (
+                    <p className="text-sm text-red-500 arabic-text">{error}</p>
+                  )}
+                  <p className="text-lg arabic-text">{location}</p>
+                  <p className="text-sm text-muted-foreground arabic-text">
+                    {new Date().toLocaleDateString("ar-EG", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.1 }}
           >
-            <Card className="arabic-text">
+            <Card className="prayer-card">
               <CardHeader>
-                <CardTitle className="arabic-text">تذكيرات الصلاة</CardTitle>
-                <CardDescription className="arabic-text">
-                  كن على صلة بصلواتك اليومية
-                </CardDescription>
+                <CardTitle className="arabic-text">الصلاة التالية</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <h4 className="font-medium arabic-text">قبل الصلاة</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
-                      <li>• الوضوء</li>
-                      <li>• التوجه للقبلة</li>
-                      <li>• اختيار مكان طاهر</li>
-                    </ul>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold arabic-text">
+                      {nextPrayer}
+                    </div>
+                    <div className="text-lg text-muted-foreground arabic-text">
+                      {prayerInfo.find((p) => p.english === nextPrayer)?.name}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium arabic-text">بعد الصلاة</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
-                      <li>• التسبيح (٣٣ مرة لكل نوع)</li>
-                      <li>• الدعاء</li>
-                      <li>• قراءة القرآن</li>
-                    </ul>
-                  </div>
+                  <motion.div className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    {countdown}
+                  </motion.div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {prayerInfo.map((prayer, index) => (
+            <motion.div
+              key={prayer.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card
+                dir="rtl"
+                className={`${
+                  currentPrayer === prayer.english
+                    ? "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950"
+                    : ""
+                } ${prayer.english === "Sunrise" ? "opacity-60" : ""}`}
+                role="region"
+                aria-label={`بطاقة وقت صلاة ${prayer.name}`}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {prayer.icon}
+                      <span className="arabic-text">{prayer.name}</span>
+                    </div>
+                    {currentPrayer === prayer.english && (
+                      <Badge className="bg-emerald-500 arabic-text">
+                        الحالية
+                      </Badge>
+                    )}
+                    {nextPrayer === prayer.english && (
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500 text-emerald-600 arabic-text"
+                      >
+                        التالية
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold font-mono">
+                      {formatTo12Hour(prayer.time)}
+                    </div>
+                    <div className="text-lg text-muted-foreground">
+                      {prayer.english}
+                    </div>
+                    <div className="text-xs text-muted-foreground arabic-text">
+                      {prayer.description}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card className="arabic-text">
+            <CardHeader>
+              <CardTitle className="arabic-text">تذكيرات الصلاة</CardTitle>
+              <CardDescription className="arabic-text">
+                كن على صلة بصلواتك اليومية
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <h4 className="font-medium arabic-text">قبل الصلاة</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
+                    <li>• الوضوء</li>
+                    <li>• التوجه للقبلة</li>
+                    <li>• اختيار مكان طاهر</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium arabic-text">بعد الصلاة</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 arabic-text">
+                    <li>• التسبيح (٣٣ مرة لكل نوع)</li>
+                    <li>• الدعاء</li>
+                    <li>• قراءة القرآن</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </SidebarInset>
+    </div>
   );
 }

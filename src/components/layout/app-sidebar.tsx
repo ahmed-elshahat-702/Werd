@@ -23,11 +23,11 @@ import { Separator } from "../ui/separator";
 import Logo from "./logo";
 import ModeToggler from "./mode-toggler";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar {...props}>
+    <Sidebar>
       <SidebarHeader>
         <Logo />
       </SidebarHeader>
