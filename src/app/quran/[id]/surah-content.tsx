@@ -113,17 +113,112 @@ const useSurahData = (surahId: string) => {
 
 const useAudioPlayer = () => {
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
-    null
-  );
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingVerseId, setPlayingVerseId] = useState<number | null>(null);
   const individualAudiosRef = useRef<Map<number, HTMLAudioElement>>(new Map());
+  const playSessionRef = useRef<symbol | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentVerseIndexRef = useRef<number>(0);
+  const audioUrlsRef = useRef<string[]>([]);
+
+  const [selectedRecitation, setSelectedRecitation] = useState<string>("ar.alafasy");
+
+  const playAudio = async (surahId: number) => {
+    // Prevent race conditions: create a local flag for this play session
+    const playSession = Symbol("playSession");
+    playSessionRef.current = playSession;
+
+    // If already paused and currentAudio exists, resume
+    if (currentAudioRef.current && !audioPlaying) {
+      currentAudioRef.current.play().then(() => setAudioPlaying(true));
+      return;
+    }
+
+    // Always stop any previous audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      setCurrentAudio(null);
+      currentAudioRef.current = null;
+    }
+    setAudioPlaying(false);
+    currentVerseIndexRef.current = 0;
+
+    try {
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surahId}/${selectedRecitation}`
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      if (!data.data.ayahs) throw new Error("No ayahs found");
+
+      const audioUrls = data.data.ayahs.map((ayah: Verse) => ayah.audio);
+      audioUrlsRef.current = audioUrls;
+      let currentIndex = currentVerseIndexRef.current;
+      let prevAudio: HTMLAudioElement | null = null;
+
+      const playNext = () => {
+        // If another play session started, abort
+        if (playSessionRef.current !== playSession) {
+          if (prevAudio) {
+            prevAudio.pause();
+            prevAudio.currentTime = 0;
+          }
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+          currentAudioRef.current = null;
+          return;
+        }
+        if (currentIndex >= audioUrls.length) {
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+          currentAudioRef.current = null;
+          return;
+        }
+        // Clean up previous audio
+        if (prevAudio) {
+          prevAudio.pause();
+          prevAudio.currentTime = 0;
+        }
+        const audio = new Audio(audioUrls[currentIndex]);
+        setCurrentAudio(audio);
+        currentAudioRef.current = audio;
+        prevAudio = audio;
+        currentVerseIndexRef.current = currentIndex;
+        audio.onended = () => {
+          currentIndex++;
+          currentVerseIndexRef.current = currentIndex;
+          playNext();
+        };
+        audio.onerror = () => {
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+          currentAudioRef.current = null;
+        };
+        audio.play().then(() => {
+          setAudioPlaying(true);
+        }).catch(() => {
+          setAudioPlaying(false);
+          setCurrentAudio(null);
+          currentAudioRef.current = null;
+        });
+      };
+      playNext();
+    } catch (error) {
+      console.error(error);
+      setAudioPlaying(false);
+      setCurrentAudio(null);
+      currentAudioRef.current = null;
+    }
+  };
 
   const stopAudio = useCallback(() => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
       setCurrentAudio(null);
+      currentAudioRef.current = null;
     }
     individualAudiosRef.current.forEach((audio) => {
       audio.pause();
@@ -132,21 +227,81 @@ const useAudioPlayer = () => {
     individualAudiosRef.current.clear();
     setAudioPlaying(false);
     setPlayingVerseId(null);
-  }, [currentAudio]);
+    // Invalidate play session
+    playSessionRef.current = null;
+    currentVerseIndexRef.current = 0;
+    audioUrlsRef.current = [];
+  }, []);
+
+  // Play/pause toggle for surah audio
+  const toggleAudio = (surahId: number) => {
+    if (audioPlaying) {
+      // Just pause, do not reset index
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        setAudioPlaying(false);
+      }
+    } else {
+      // Resume if paused, or start from current index
+      if (currentAudioRef.current && audioUrlsRef.current.length > 0) {
+        currentAudioRef.current.play().then(() => setAudioPlaying(true));
+      } else {
+        playAudio(surahId);
+      }
+    }
+  };
+
+  // Play individual verse audio
+  const playIndividualVerse = (verse: EnhancedVerse) => {
+    if (playingVerseId === verse.number) {
+      const audio = individualAudiosRef.current.get(verse.number);
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+      setPlayingVerseId(null);
+      return;
+    }
+
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      setAudioPlaying(false);
+      setCurrentAudio(null);
+      currentAudioRef.current = null;
+    }
+
+    if (verse.audioUrl) {
+      const audio = new Audio(verse.audioUrl);
+      individualAudiosRef.current.set(verse.number, audio);
+      setPlayingVerseId(verse.number);
+
+      audio.onended = () => {
+        setPlayingVerseId(null);
+      };
+
+      audio.play().catch(() => {
+        setPlayingVerseId(null);
+      });
+    }
+  };
 
   useEffect(() => {
     return () => stopAudio();
   }, [stopAudio]);
 
   return {
+    playAudio,
     audioPlaying,
     setAudioPlaying,
     currentAudio,
     setCurrentAudio,
     playingVerseId,
     setPlayingVerseId,
-    individualAudios: individualAudiosRef.current,
     stopAudio,
+    selectedRecitation,
+    setSelectedRecitation,
+    playIndividualVerse,
+    toggleAudio,
   };
 };
 
@@ -161,17 +316,16 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
     recitationsLoading,
   } = useSurahData(surahId);
   const {
-    audioPlaying,
-    setAudioPlaying,
     currentAudio,
-    setCurrentAudio,
+    toggleAudio,
+    audioPlaying,
     playingVerseId,
-    setPlayingVerseId,
-    individualAudios,
     stopAudio,
+    selectedRecitation,
+    setSelectedRecitation,
+    playIndividualVerse,
   } = useAudioPlayer();
-  const [selectedRecitation, setSelectedRecitation] =
-    useState<string>("ar.alafasy");
+
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -240,96 +394,6 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
 
     fetchVersesWithTranslation();
   }, [selectedRecitation, surahId, setVerses, setVersesLoading]);
-
-  const playAudio = useCallback(async () => {
-    if (audioPlaying && currentAudio) {
-      currentAudio.pause();
-      setAudioPlaying(false);
-      return;
-    }
-
-    if (currentAudio && !audioPlaying) {
-      try {
-        await currentAudio.play();
-        setAudioPlaying(true);
-      } catch (error) {
-        console.error(error);
-        toast.error("Audio playback failed");
-      }
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.alquran.cloud/v1/surah/${surahId}/${selectedRecitation}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch audio");
-      const data = await response.json();
-      const audioUrls = data.data.ayahs.map((ayah: Verse) => ayah.audio);
-
-      if (audioUrls.length > 0) {
-        const audio = new Audio(audioUrls[0]);
-        setCurrentAudio(audio);
-        setAudioPlaying(true);
-
-        audio.onended = () => {
-          setCurrentAudio(null);
-          setAudioPlaying(false);
-        };
-
-        audio.play().catch(() => {
-          toast.error("Audio playback failed");
-          setAudioPlaying(false);
-          setCurrentAudio(null);
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load audio");
-    }
-  }, [
-    audioPlaying,
-    currentAudio,
-    selectedRecitation,
-    setAudioPlaying,
-    setCurrentAudio,
-    surahId,
-  ]);
-
-  const playIndividualVerse = useCallback(
-    (verse: EnhancedVerse) => {
-      if (playingVerseId === verse.number) {
-        const audio = individualAudios.get(verse.number);
-        if (audio) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-        individualAudios.delete(verse.number);
-        setPlayingVerseId(null);
-        return;
-      }
-
-      stopAudio();
-
-      if (verse.audioUrl) {
-        const audio = new Audio(verse.audioUrl);
-        individualAudios.set(verse.number, audio);
-        setPlayingVerseId(verse.number);
-
-        audio.onended = () => {
-          individualAudios.delete(verse.number);
-          setPlayingVerseId(null);
-        };
-
-        audio.play().catch(() => {
-          toast.error("Verse audio playback failed");
-          individualAudios.delete(verse.number);
-          setPlayingVerseId(null);
-        });
-      }
-    },
-    [individualAudios, playingVerseId, setPlayingVerseId, stopAudio]
-  );
 
   const currentRecitationName = useMemo(() => {
     const recitation = recitations.find(
@@ -436,7 +500,10 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={playAudio} className="misbaha-button">
+              <Button
+                onClick={() => toggleAudio(surah.number)}
+                className="misbaha-button"
+              >
                 {audioPlaying ? (
                   <Pause className="h-4 w-4" />
                 ) : (
@@ -446,6 +513,7 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
               <Button
                 onClick={stopAudio}
                 variant="outline"
+                size="default"
                 disabled={!currentAudio && !audioPlaying && !playingVerseId}
               >
                 <RotateCcw className="h-4 w-4" />
@@ -515,14 +583,9 @@ const SurahContent = ({ surahId }: { surahId: string }) => {
                 </TabsList>
               </Tabs>
             </div>
-            {(audioPlaying || playingVerseId) && (
+            {audioPlaying && (
               <div className="text-sm text-muted-foreground">
-                {audioPlaying && `Playing: ${currentRecitationName}`}
-                {playingVerseId &&
-                  `Playing verse: ${
-                    verses.find((v) => v.number === playingVerseId)
-                      ?.numberInSurah
-                  }`}
+                {audioPlaying && `Playing Surah: ${currentRecitationName}`}
               </div>
             )}
           </div>
