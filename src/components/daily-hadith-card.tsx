@@ -111,7 +111,7 @@ const DailyHadithCard = ({ itemVariants }: { itemVariants: Variants }) => {
                     <Card className="flex flex-col h-fit shadow-md border rounded-2xl">
                       <CardContent className="flex flex-col justify-between flex-grow space-y-4 text-right p-6 arabic-text">
                         <div
-                          className={`text-xl leading-loose font-medium text-gray-900 ${
+                          className={`text-xl leading-loose font-medium ${
                             expandedHadithId === hadith.id ? "" : "line-clamp-4"
                           }`}
                         >
