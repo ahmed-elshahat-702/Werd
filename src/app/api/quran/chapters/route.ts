@@ -8,7 +8,7 @@ async function getChapters(accessToken: string, clientId: string) {
   try {
     const response = await axios({
       method: "get",
-      url: `${baseURL}/content/api/v4/chapters`,
+      url: `${baseURL}/chapters`,
       headers: {
         "x-auth-token": accessToken,
         "x-client-id": clientId,

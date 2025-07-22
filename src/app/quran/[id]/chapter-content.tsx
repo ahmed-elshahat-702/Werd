@@ -1,0 +1,300 @@
+"use client";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAppStore } from "@/lib/store";
+import { Chapter, ViewMode, Verse } from "@/lib/types";
+import { BookOpenCheck, Grid3X3 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import CardsView from "./cards-view";
+
+interface ChapterData {
+  chapter: Chapter | null;
+  verses: Verse[];
+  totalPages: number | null;
+  error: string | null;
+  isLoading: boolean;
+}
+
+const useChapterData = (chapterId: string) => {
+  const { setIsHandling, setHeaderArabicTitle, setHeaderEnglishTitle } =
+    useAppStore();
+  const [data, setData] = useState<ChapterData>({
+    chapter: null,
+    verses: [],
+    totalPages: null,
+    error: null,
+    isLoading: false,
+  });
+  const [isLoadingChapter, setIsLoadingChapter] = useState(false);
+  const [isLoadingVerses, setIsLoadingVerses] = useState(false);
+
+  const fetchChapter = useCallback(async () => {
+    if (!chapterId || isNaN(Number(chapterId))) {
+      setData((prev) => ({ ...prev, error: "Invalid chapter ID" }));
+      return;
+    }
+
+    setIsLoadingChapter(true);
+    setIsHandling(true);
+    try {
+      const res = await fetch(`/api/quran/chapters/${chapterId}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`Chapter HTTP ${res.status}`);
+      const chapterData = await res.json();
+      if (!chapterData.chapter) throw new Error("Chapter data not found");
+
+      setData((prev) => ({ ...prev, chapter: chapterData.chapter }));
+      setHeaderArabicTitle(chapterData.chapter.name_arabic);
+      setHeaderEnglishTitle(chapterData.chapter.name_simple);
+    } catch (error) {
+      console.error("Fetch chapter error:", error);
+      setData((prev) => ({
+        ...prev,
+        error: "Failed to load chapter data",
+      }));
+      toast.error("Failed to load chapter data");
+    } finally {
+      setIsHandling(false);
+      setIsLoadingChapter(false);
+    }
+  }, [chapterId, setIsHandling, setHeaderArabicTitle, setHeaderEnglishTitle]);
+
+  const fetchVerses = useCallback(
+    async (page: number) => {
+      if (!chapterId || isNaN(Number(chapterId))) return;
+
+      setIsLoadingVerses(true);
+      try {
+        const res = await fetch(
+          `/api/quran/verses/by_chapter/${chapterId}?page=${page}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) throw new Error(`Verses HTTP ${res.status}`);
+        const versesData = await res.json();
+        if (!versesData.verses) throw new Error("Verses data not found");
+
+        setData((prev) => ({
+          ...prev,
+          verses: versesData.verses,
+          totalPages: versesData.pagination?.total_pages || 1,
+          error: null,
+        }));
+      } catch (error) {
+        console.error("Fetch verses error:", error);
+        setData((prev) => ({
+          ...prev,
+          error: "Failed to load verses",
+        }));
+        toast.error("Failed to load verses");
+      } finally {
+        setIsLoadingVerses(false);
+      }
+    },
+    [chapterId]
+  );
+
+  useEffect(() => {
+    fetchChapter();
+  }, [fetchChapter]);
+
+  return { ...data, fetchVerses, isLoadingChapter, isLoadingVerses };
+};
+
+const ChapterContent = ({ chapterId }: { chapterId: string }) => {
+  const {
+    chapter,
+    verses,
+    totalPages,
+    error,
+    isLoadingChapter,
+    isLoadingVerses,
+    fetchVerses,
+  } = useChapterData(chapterId);
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useEffect(() => {
+    fetchVerses(currentPage);
+  }, [currentPage, fetchVerses]);
+
+  const goToPage = useCallback(
+    (direction: "next" | "prev") => {
+      if (!totalPages) return;
+      const newPage =
+        direction === "next"
+          ? Math.min(currentPage + 1, totalPages)
+          : Math.max(currentPage - 1, 1);
+      if (newPage !== currentPage) setCurrentPage(newPage);
+    },
+    [currentPage, totalPages]
+  );
+
+  if (error) {
+    return (
+      <div className="flex-1 p-6 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-500">{error}</p>
+            <Button
+              onClick={() => {
+                fetchVerses(currentPage);
+              }}
+              className="mt-4"
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoadingChapter || !chapter) {
+    return (
+      <div className="flex-1 p-6 space-y-8">
+        <Skeleton className="h-10 w-64" />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-5 w-32" />
+              </div>
+              <Skeleton className="h-10 w-24" />
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const showBismillah = chapter.bismillah_pre && currentPage === 1;
+
+  return (
+    <div className="flex-1 min-h-screen p-6 w-full space-y-8">
+      <Breadcrumb dir="rtl" className="arabic-text">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">الرئيسية</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="rotate-180" />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/quran">القرءان الكريم</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="rotate-180" />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{chapter.name_arabic}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl">{chapter.name_simple}</CardTitle>
+              <CardDescription className="arabic-text text-xl font-semibold">
+                {chapter.name_arabic}
+              </CardDescription>
+            </div>
+            <Tabs
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as ViewMode)}
+              className="w-48"
+            >
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger value="cards" className="flex items-center gap-2">
+                  <Grid3X3 className="h-4 w-4" /> Cards
+                </TabsTrigger>
+                <TabsTrigger value="mushaf" className="flex items-center gap-2">
+                  <BookOpenCheck className="h-4 w-4" /> Mushaf
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className={viewMode === "cards" ? "arabic-text" : ""}>
+            {viewMode === "cards" ? "الآيات" : "Mushaf View"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingVerses ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <Skeleton key={index} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {showBismillah && (
+                <div className="text-center text-2xl arabic-text mb-6">
+                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                </div>
+              )}
+              {viewMode === "cards" ? (
+                <CardsView
+                  pages={[{ number: currentPage, verses }]}
+                  currentPage={currentPage}
+                />
+              ) : (
+                <div className="text-center text-gray-500">
+                  Mushaf View (Coming Soon)
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {totalPages && totalPages > 1 && (
+        <div className="flex justify-between items-center mt-8 p-4 bg-gray-50 rounded-lg shadow-inner">
+          <Button
+            onClick={() => goToPage("prev")}
+            disabled={currentPage === 1 || isLoadingVerses}
+            className="px-5 py-2 disabled:opacity-50"
+          >
+            <span className="mr-2">←</span> Previous
+          </Button>
+          <span className="text-md font-medium">
+            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+          </span>
+          <Button
+            onClick={() => goToPage("next")}
+            disabled={currentPage === totalPages || isLoadingVerses}
+            className="px-5 py-2 disabled:opacity-50"
+          >
+            Next <span className="ml-2">→</span>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ChapterContent;

@@ -14,6 +14,12 @@ export const formatTo12Hour = (time: string) => {
   return `${hour}:${minute} ${ampm}`;
 };
 
+export const removeArabicDiacritics = (text: string) => {
+  const arabicDiacritics =
+    /[\u0610-\u061A\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g;
+  return text.replace(arabicDiacritics, "");
+};
+
 export const convertToArabicNumber = (number: number | string) => {
   const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
   return number

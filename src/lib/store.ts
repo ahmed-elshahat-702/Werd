@@ -13,8 +13,8 @@ export const useAppStore = create<AppState>()(
       headerEnglishTitle: "",
       setHeaderArabicTitle: (title) => set({ headerArabicTitle: title }),
       setHeaderEnglishTitle: (title) => set({ headerEnglishTitle: title }),
-      surahs: [],
-      setSurahs: (data) => set({ surahs: data }),
+      chapters: [],
+      setChapters: (data) => set({ chapters: data }),
       bookmarks: [],
       azkar: { morning: [], evening: [], afterPrayer: [], sleep: [] },
       setAzkar: (data) => set({ azkar: data }),
@@ -37,14 +37,14 @@ export const useAppStore = create<AppState>()(
         sessions: [],
       },
       dailyVerseState: {
-        surahId: 1,
+        chapterId: 1,
         ayahNumber: 1,
         lastShownDate: "",
       },
-      updateDailyVerseState: (date, surahId, ayahNumber) =>
+      updateDailyVerseState: (date, chapterId, ayahNumber) =>
         set({
           dailyVerseState: {
-            surahId,
+            chapterId,
             ayahNumber,
             lastShownDate: date,
           },
@@ -154,7 +154,7 @@ export const useAppStore = create<AppState>()(
       name: "werd-storage",
       partialize: (state) => ({
         user: state.user,
-        surahs: state.surahs,
+        chapters: state.chapters,
         bookmarks: state.bookmarks,
         azkar: state.azkar,
         dailyHadiths: state.dailyHadiths,

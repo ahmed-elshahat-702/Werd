@@ -1,9 +1,9 @@
-import SurahContent from "./surah-content";
+import ChapterContent from "./chapter-content";
 
 const page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
-  return <SurahContent surahId={id} />;
+  return <ChapterContent chapterId={id} />;
 };
 
 export default page;

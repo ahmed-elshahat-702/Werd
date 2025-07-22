@@ -3,30 +3,6 @@ export interface User {
   location: string;
 }
 
-export interface Surah {
-  number: number;
-  name: string;
-  englishName: string;
-  englishNameTranslation: string;
-  revelationType: string;
-  numberOfAyahs: number;
-  ayahs: Verse[];
-}
-
-export interface Verse {
-  number: number;
-  text: string;
-  numberInSurah: number;
-  juz: number;
-  manzil: number;
-  page: number;
-  ruku: number;
-  hizbQuarter: number;
-  sajda: boolean;
-  audio: string;
-  audioSecondary: string[];
-}
-
 export interface Recitation {
   identifier: string;
   language: string;
@@ -37,15 +13,37 @@ export interface Recitation {
   direction: string | null;
 }
 
-// Verse with translation
-export interface EnhancedVerse extends Verse {
-  translation?: string;
-  audioUrl?: string;
+export interface Verse {
+  id: number;
+  chapter_id: number;
+  verse_number: number;
+  verse_key: string;
+  verse_index?: number;
+  text_uthmani?: string;
+  text_uthmani_simple?: string;
+  text_imlaei?: string;
+  text_imlaei_simple?: string;
+  text_indopak?: string;
+  text_uthmani_tajweed?: string;
+  juz_number: number;
+  hizb_number: number;
+  rub_number: number;
+  page_number: number;
+  image_url?: string;
+  image_width?: number;
+  v1_page?: number;
+  v2_page?: number;
+  audio?: AudioInfo;
+  words?: Word[];
+  translations?: Translation[];
+  tafsirs?: Tafsir[];
+  code_v1?: string;
+  code_v2?: string;
 }
 
 export interface PageData {
   number: number;
-  verses: EnhancedVerse[];
+  verses: Verse[];
 }
 
 export type ViewMode = "cards" | "mushaf";
@@ -59,13 +57,22 @@ export interface Book {
   bookSlug: string;
 }
 
+export type TranslatedName = {
+  language_name: string;
+  name: string;
+};
+
 export interface Chapter {
   id: number;
-  chapterNumber: string;
-  chapterEnglish: string;
-  chapterUrdu: string;
-  chapterArabic: string;
-  bookSlug: string;
+  revelation_place: "makkah" | "madinah";
+  revelation_order: number;
+  bismillah_pre: boolean;
+  name_simple: string;
+  name_complex: string;
+  name_arabic: string;
+  verses_count: number;
+  pages: [number, number];
+  translated_name: TranslatedName;
 }
 
 export interface Hadith {
@@ -147,8 +154,8 @@ export interface AppState {
   headerEnglishTitle: string;
   setHeaderArabicTitle: (title: string) => void;
   setHeaderEnglishTitle: (title: string) => void;
-  surahs: Surah[];
-  setSurahs: (surahs: Surah[]) => void;
+  chapters: Chapter[];
+  setChapters: (chapters: Chapter[]) => void;
   bookmarks: Bookmark[];
   azkar: Record<AzkarCategory, ZikrItem[]>;
   setAzkar: (data: Record<AzkarCategory, ZikrItem[]>) => void;
@@ -174,13 +181,13 @@ export interface AppState {
     sessions: Array<{ zikr: string; count: number; date: string }>;
   };
   dailyVerseState: {
-    surahId: number;
+    chapterId: number;
     ayahNumber: number;
     lastShownDate: string;
   };
   updateDailyVerseState: (
     date: string,
-    surahId: number,
+    chapterId: number,
     ayahNumber: number
   ) => void;
   addBookmark: (bookmark: Bookmark) => void;
@@ -190,4 +197,87 @@ export interface AppState {
   setCustomZikr: (zikr: string) => void;
   saveMisbahaSession: () => void;
   clearMisbahaSessions: () => void;
+}
+
+// quran api types
+// 🔹 Root structure for the API response
+export interface VersesByChapterResponse {
+  verses: Verse[];
+  pagination: Pagination;
+}
+
+// 🔹 Audio metadata for the verse
+export interface AudioInfo {
+  url: string;
+  duration: number;
+  format: string;
+  segments: AudioSegment[];
+}
+
+export interface AudioSegment {
+  url: string;
+  start_time: number;
+  duration: number;
+}
+
+// 🔹 Word-level details within a verse
+export interface Word {
+  id?: number;
+  position: number;
+  verse_key?: string;
+  page_number?: number;
+  line_number?: number;
+  audio_url: string;
+  char_type_name: string;
+  code_v1?: string;
+  code_v2?: string;
+  text_uthmani?: string;
+  text_imlaei?: string;
+  text_indopak?: string;
+  v1_page?: number;
+  v2_page?: number;
+
+  translation: {
+    text: string;
+    language_name: string;
+  };
+  transliteration: {
+    text: string;
+    language_name: string;
+  };
+}
+
+// 🔹 Verse-level translations
+export interface Translation {
+  resource_id: number;
+  resource_name?: string;
+  id?: number;
+  text: string;
+  verse_id?: number;
+  language_id?: number;
+  language_name?: string;
+  verse_key?: string;
+  chapter_id?: number;
+  verse_number?: number;
+  juz_number?: number;
+  hizb_number?: number;
+  rub_number?: number;
+  page_number?: number;
+}
+
+// 🔹 Verse-level tafsir entries
+export interface Tafsir {
+  id: number;
+  language_name: string;
+  name: string;
+  text: string;
+}
+
+// 🔹 Pagination info
+export interface Pagination {
+  per_page: number;
+  current_page: number;
+  next_page?: number;
+  total_pages: number;
+  total_records: number;
 }

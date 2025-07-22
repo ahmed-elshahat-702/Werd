@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 
 interface DailyVerse {
   text: string;
-  surah: { englishName: string; name: string };
-  numberInSurah: number;
+  chapter: { englishName: string; name: string };
+  numberInChapter: number;
 }
 
 const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
@@ -24,7 +24,7 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
     const isNewDay = today !== dailyVerseState.lastShownDate;
 
     const fetchNextVerse = async () => {
-      let surahId = dailyVerseState.surahId;
+      let chapterId = dailyVerseState.chapterId;
       let ayahNumber = dailyVerseState.ayahNumber;
 
       try {
@@ -32,31 +32,31 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
         if (isNewDay) {
           const res = await fetch(
-            `https://api.alquran.cloud/v1/surah/${surahId}`
+            `https://api.alquran.cloud/v1/chapter/${chapterId}`
           );
           const data = await res.json();
           const totalAyat = data.data.numberOfAyahs;
 
           if (ayahNumber >= totalAyat) {
-            surahId += 1;
+            chapterId += 1;
             ayahNumber = 1;
           } else {
             ayahNumber += 1;
           }
 
-          updateDailyVerseState(today, surahId, ayahNumber);
+          updateDailyVerseState(today, chapterId, ayahNumber);
         }
 
         const response = await fetch(
-          `https://api.alquran.cloud/v1/ayah/${surahId}:${ayahNumber}`
+          `https://api.alquran.cloud/v1/ayah/${chapterId}:${ayahNumber}`
         );
         const verseData = await response.json();
 
         if (verseData.data) {
           setDailyVerse({
             text: verseData.data.text,
-            surah: verseData.data.surah,
-            numberInSurah: verseData.data.numberInSurah,
+            chapter: verseData.data.chapter,
+            numberInChapter: verseData.data.numberInChapter,
           });
         }
       } catch (error) {
@@ -90,7 +90,7 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
                 {dailyVerse.text}
               </div>
               <div className="text-sm text-muted-foreground arabic-text">
-                {dailyVerse.surah.name} - الآية {dailyVerse.numberInSurah}
+                {dailyVerse.chapter.name} - الآية {dailyVerse.numberInChapter}
               </div>
             </div>
           ) : (

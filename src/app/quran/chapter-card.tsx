@@ -2,21 +2,27 @@
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Surah } from "@/lib/types";
+import { Chapter } from "@/lib/types";
 import { cn, convertToArabicNumber } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-const SurahCard = ({ surah, index }: { surah: Surah; index: number }) => {
+const ChapterCard = ({
+  chapter,
+  index,
+}: {
+  chapter: Chapter;
+  index: number;
+}) => {
   return (
     <motion.div
-      key={surah.number}
+      key={chapter.id}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
       <Link
-        href={`/quran/${surah.number}`}
+        href={`/quran/${chapter.id}`}
         className={cn(
           buttonVariants({
             variant: "outline",
@@ -28,22 +34,22 @@ const SurahCard = ({ surah, index }: { surah: Surah; index: number }) => {
         <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="arabic-text flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-              {convertToArabicNumber(surah.number)}
+              {convertToArabicNumber(chapter.id)}
             </div>
             <div className="text-right space-y-2">
               <div className="arabic-text text-lg font-semibold">
-                {surah.name}
+                {chapter.name_arabic}
               </div>
               <div className="text-sm text-muted-foreground arabic-text">
-                {convertToArabicNumber(surah.numberOfAyahs)}{" "}
-                {surah.numberOfAyahs === 1 ? "آية" : "آيات"}
+                {convertToArabicNumber(chapter.verses_count)}{" "}
+                {chapter.verses_count === 1 ? "آية" : "آيات"}
               </div>
             </div>
           </div>
           <div dir="ltr" className="space-y-2">
-            <div className="font-medium">{surah.englishName}</div>
+            <div className="font-medium">{chapter.name_simple}</div>
             <Badge variant="outline" className="text-xs arabic-text">
-              {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
+              {chapter.revelation_place === "makkah" ? "مكية" : "مدنية"}
             </Badge>
           </div>
         </div>
@@ -52,4 +58,4 @@ const SurahCard = ({ surah, index }: { surah: Surah; index: number }) => {
   );
 };
 
-export default SurahCard;
+export default ChapterCard;
