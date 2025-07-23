@@ -38,14 +38,14 @@ export const useAppStore = create<AppState>()(
       },
       dailyVerseState: {
         chapterId: 1,
-        ayahNumber: 1,
+        verseNumber: 1,
         lastShownDate: "",
       },
-      updateDailyVerseState: (date, chapterId, ayahNumber) =>
+      updateDailyVerseState: (date, chapterId, verseNumber) =>
         set({
           dailyVerseState: {
             chapterId,
-            ayahNumber,
+            verseNumber,
             lastShownDate: date,
           },
         }),
@@ -152,6 +152,22 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "werd-storage",
+      version: 1,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          if (
+            persistedState &&
+            persistedState.dailyVerseState &&
+            "ayahNumber" in persistedState.dailyVerseState
+          ) {
+            persistedState.dailyVerseState.verseNumber =
+              persistedState.dailyVerseState.ayahNumber;
+            delete persistedState.dailyVerseState.ayahNumber;
+          }
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         user: state.user,
         chapters: state.chapters,

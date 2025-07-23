@@ -3,71 +3,90 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
+import { Verse } from "@/lib/types";
 import { motion, Variants } from "framer-motion";
 import { BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 
-interface DailyVerse {
-  text: string;
-  chapter: { englishName: string; name: string };
-  numberInChapter: number;
-}
-
 const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
-  const [dailyVerse, setDailyVerse] = useState<DailyVerse | null>(null);
-  const [isHandling, setIsHandling] = useState(true);
+  const [dailyVerse, setDailyVerse] = useState<Verse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const { dailyVerseState, updateDailyVerseState } = useAppStore();
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const { dailyVerseState, updateDailyVerseState } = useAppStore.getState();
+    const fetchAndSetDailyVerse = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    const isNewDay = today !== dailyVerseState.lastShownDate;
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      let { chapterId, verseNumber } = dailyVerseState;
+      const { lastShownDate } = dailyVerseState;
 
-    const fetchNextVerse = async () => {
-      let chapterId = dailyVerseState.chapterId;
-      let ayahNumber = dailyVerseState.ayahNumber;
+      chapterId = chapterId || 1;
+      verseNumber = verseNumber || 1;
+
+      const isNewDay = today !== lastShownDate;
 
       try {
-        setIsHandling(true);
-
         if (isNewDay) {
-          const res = await fetch(
-            `https://api.alquran.cloud/v1/chapter/${chapterId}`
+          const chapterInfoRes = await fetch(
+            `/api/quran/chapters/${chapterId}`
           );
-          const data = await res.json();
-          const totalAyat = data.data.numberOfAyahs;
 
-          if (ayahNumber >= totalAyat) {
-            chapterId += 1;
-            ayahNumber = 1;
-          } else {
-            ayahNumber += 1;
+          if (!chapterInfoRes.ok) {
+            throw new Error(
+              `Failed to fetch chapter info: ${chapterInfoRes.statusText}`
+            );
+          }
+          const chapterInfoData = await chapterInfoRes.json();
+          const totalAyat = chapterInfoData?.chapter?.verses_count;
+
+          if (totalAyat === undefined) {
+            throw new Error(
+              "Could not retrieve total number of verses for the chapter."
+            );
           }
 
-          updateDailyVerseState(today, chapterId, ayahNumber);
+          if (verseNumber >= totalAyat) {
+            chapterId += 1;
+            verseNumber = 1;
+          } else {
+            verseNumber += 1;
+          }
+
+          updateDailyVerseState(today, chapterId, verseNumber);
         }
 
-        const response = await fetch(
-          `https://api.alquran.cloud/v1/ayah/${chapterId}:${ayahNumber}`
+        const verseResponse = await fetch(
+          `/api/quran/verses/by_key/${chapterId}:${verseNumber}`
         );
-        const verseData = await response.json();
 
-        if (verseData.data) {
-          setDailyVerse({
-            text: verseData.data.text,
-            chapter: verseData.data.chapter,
-            numberInChapter: verseData.data.numberInChapter,
-          });
+        if (!verseResponse.ok) {
+          throw new Error(
+            `Failed to fetch daily verse: ${verseResponse.statusText}`
+          );
         }
-      } catch (error) {
-        console.error("فشل تحميل الآية:", error);
+
+        const verseData = await verseResponse.json();
+
+        if (verseData.verse) {
+          setDailyVerse(verseData.verse);
+        } else {
+          throw new Error("No verse data found in the API response.");
+        }
+      } catch (err) {
+        console.error("فشل تحميل الآية:", err);
+        setError("فشل تحميل الآية. الرجاء المحاولة لاحقاً.");
+        setDailyVerse(null);
       } finally {
-        setIsHandling(false);
+        setIsLoading(false);
       }
     };
 
-    fetchNextVerse();
-  }, []);
+    fetchAndSetDailyVerse();
+  }, [dailyVerseState, updateDailyVerseState]);
 
   return (
     <motion.div variants={itemVariants}>
@@ -79,18 +98,34 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isHandling ? (
+          {isLoading ? (
             <div className="space-y-3 text-right">
               <Skeleton className="h-6 w-full rounded-lg" />
               <Skeleton className="h-4 w-3/4 rounded-lg" />
             </div>
+          ) : error ? (
+            <div className="text-right arabic-text text-red-500">{error}</div>
           ) : dailyVerse ? (
-            <div className="space-y-3 text-right">
+            <div className="space-y-3">
               <div className="arabic-text text-lg leading-relaxed">
-                {dailyVerse.text}
+                {dailyVerse.text_imlaei}
               </div>
+              {dailyVerse.words && (
+                <div dir="ltr" className="text-sm w-full">
+                  <p className="text-sm text-muted-foreground mt-3 italic">
+                    {dailyVerse.words
+                      ?.map((w) => w.transliteration?.text)
+                      .filter(Boolean)
+                      .join(" ")}
+                  </p>
+                  {dailyVerse.words
+                    ?.map((w) => w.translation?.text)
+                    .filter(Boolean)
+                    .join(" ")}
+                </div>
+              )}
               <div className="text-sm text-muted-foreground arabic-text">
-                {dailyVerse.chapter.name} - الآية {dailyVerse.numberInChapter}
+                الآية {dailyVerse.verse_number}
               </div>
             </div>
           ) : (

@@ -182,13 +182,13 @@ export interface AppState {
   };
   dailyVerseState: {
     chapterId: number;
-    ayahNumber: number;
+    verseNumber: number;
     lastShownDate: string;
   };
   updateDailyVerseState: (
     date: string,
     chapterId: number,
-    ayahNumber: number
+    verseNumber: number
   ) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
