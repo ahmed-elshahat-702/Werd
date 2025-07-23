@@ -21,6 +21,8 @@ export const useAppStore = create<AppState>()(
       dailyHadiths: { hadiths: [], date: "" },
       setDailyHadiths: (hadiths, date) =>
         set({ dailyHadiths: { hadiths, date } }),
+      dailyVerse: null,
+      setDailyVerse: (verse) => set({ dailyVerse: verse }),
       lastResetDate: "",
       setLastResetDate: (date) => set({ lastResetDate: date }),
       prayerTimes: null,
@@ -152,7 +154,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "werd-storage",
-      version: 1,
+      version: 2,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
@@ -166,6 +168,12 @@ export const useAppStore = create<AppState>()(
             delete persistedState.dailyVerseState.ayahNumber;
           }
         }
+        if (version === 1) {
+          persistedState.dailyVerseState = {
+            ...persistedState.dailyVerseState,
+            chapterId: persistedState.dailyVerseState.chapterId || 1,
+          };
+        }
         return persistedState;
       },
       partialize: (state) => ({
@@ -174,6 +182,7 @@ export const useAppStore = create<AppState>()(
         bookmarks: state.bookmarks,
         azkar: state.azkar,
         dailyHadiths: state.dailyHadiths,
+        dailyVerse: state.dailyVerse,
         misbaha: state.misbaha,
         dailyVerseState: state.dailyVerseState,
         lastResetDate: state.lastResetDate,

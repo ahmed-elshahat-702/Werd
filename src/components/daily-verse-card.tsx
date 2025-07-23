@@ -3,17 +3,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store";
-import { Verse } from "@/lib/types";
 import { motion, Variants } from "framer-motion";
 import { BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
-  const [dailyVerse, setDailyVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { dailyVerseState, updateDailyVerseState } = useAppStore();
+  const { dailyVerseState, updateDailyVerseState, dailyVerse, setDailyVerse } =
+    useAppStore();
 
   useEffect(() => {
     const fetchAndSetDailyVerse = async () => {
@@ -29,64 +28,69 @@ const DailyVerseCard = ({ itemVariants }: { itemVariants: Variants }) => {
 
       const isNewDay = today !== lastShownDate;
 
-      try {
-        if (isNewDay) {
-          const chapterInfoRes = await fetch(
-            `/api/quran/chapters/${chapterId}`
+      // Only fetch if it's a new day OR if dailyVerse is null in the store
+      if (isNewDay || !dailyVerse) {
+        try {
+          if (isNewDay) {
+            const chapterInfoRes = await fetch(
+              `/api/quran/chapters/${chapterId}`
+            );
+
+            if (!chapterInfoRes.ok) {
+              throw new Error(
+                `Failed to fetch chapter info: ${chapterInfoRes.statusText}`
+              );
+            }
+            const chapterInfoData = await chapterInfoRes.json();
+            const totalAyat = chapterInfoData?.chapter?.verses_count;
+
+            if (totalAyat === undefined) {
+              throw new Error(
+                "Could not retrieve total number of verses for the chapter."
+              );
+            }
+
+            if (verseNumber >= totalAyat) {
+              chapterId += 1;
+              verseNumber = 1;
+            } else {
+              verseNumber += 1;
+            }
+
+            updateDailyVerseState(today, chapterId, verseNumber);
+          }
+
+          const verseResponse = await fetch(
+            `/api/quran/verses/by_key/${chapterId}:${verseNumber}`
           );
 
-          if (!chapterInfoRes.ok) {
+          if (!verseResponse.ok) {
             throw new Error(
-              `Failed to fetch chapter info: ${chapterInfoRes.statusText}`
-            );
-          }
-          const chapterInfoData = await chapterInfoRes.json();
-          const totalAyat = chapterInfoData?.chapter?.verses_count;
-
-          if (totalAyat === undefined) {
-            throw new Error(
-              "Could not retrieve total number of verses for the chapter."
+              `Failed to fetch daily verse: ${verseResponse.statusText}`
             );
           }
 
-          if (verseNumber >= totalAyat) {
-            chapterId += 1;
-            verseNumber = 1;
+          const verseData = await verseResponse.json();
+
+          if (verseData.verse) {
+            setDailyVerse(verseData.verse);
           } else {
-            verseNumber += 1;
+            throw new Error("No verse data found in the API response.");
           }
-
-          updateDailyVerseState(today, chapterId, verseNumber);
+        } catch (err) {
+          console.error("فشل تحميل الآية:", err);
+          setError("فشل تحميل الآية. الرجاء المحاولة لاحقاً.");
+          setDailyVerse(null);
+        } finally {
+          setIsLoading(false);
         }
-
-        const verseResponse = await fetch(
-          `/api/quran/verses/by_key/${chapterId}:${verseNumber}`
-        );
-
-        if (!verseResponse.ok) {
-          throw new Error(
-            `Failed to fetch daily verse: ${verseResponse.statusText}`
-          );
-        }
-
-        const verseData = await verseResponse.json();
-
-        if (verseData.verse) {
-          setDailyVerse(verseData.verse);
-        } else {
-          throw new Error("No verse data found in the API response.");
-        }
-      } catch (err) {
-        console.error("فشل تحميل الآية:", err);
-        setError("فشل تحميل الآية. الرجاء المحاولة لاحقاً.");
-        setDailyVerse(null);
-      } finally {
+      } else {
         setIsLoading(false);
       }
     };
 
     fetchAndSetDailyVerse();
-  }, [dailyVerseState, updateDailyVerseState]);
+  }, [dailyVerseState, updateDailyVerseState, dailyVerse, setDailyVerse]);
 
   return (
     <motion.div variants={itemVariants}>

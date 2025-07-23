@@ -161,6 +161,18 @@ export interface AppState {
   setAzkar: (data: Record<AzkarCategory, ZikrItem[]>) => void;
   dailyHadiths: { hadiths: Hadith[]; date: string };
   setDailyHadiths: (hadiths: Hadith[], date: string) => void;
+  dailyVerse: Verse | null;
+  setDailyVerse: (verse: Verse | null) => void;
+  dailyVerseState: {
+    chapterId: number;
+    verseNumber: number;
+    lastShownDate: string;
+  };
+  updateDailyVerseState: (
+    date: string,
+    chapterId: number,
+    verseNumber: number
+  ) => void;
   lastResetDate: string;
   setLastResetDate: (date: string) => void;
   prayerTimes: PrayerTimes | null;
@@ -180,16 +192,6 @@ export interface AppState {
     customZikr: string;
     sessions: Array<{ zikr: string; count: number; date: string }>;
   };
-  dailyVerseState: {
-    chapterId: number;
-    verseNumber: number;
-    lastShownDate: string;
-  };
-  updateDailyVerseState: (
-    date: string,
-    chapterId: number,
-    verseNumber: number
-  ) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
   incrementMisbaha: () => void;
