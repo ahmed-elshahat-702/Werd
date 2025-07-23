@@ -21,7 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/lib/store";
 import { Chapter, ViewMode, Verse } from "@/lib/types";
 import { BookOpenCheck, Grid3X3 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CardsView from "./cards-view";
 
@@ -45,6 +45,21 @@ const useChapterData = (chapterId: string) => {
   });
   const [isLoadingChapter, setIsLoadingChapter] = useState(false);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
+  const [loadedPages, setLoadedPages] = useState<number[]>([]);
+
+  const initialVersesLoaded = useRef(false);
+
+  useEffect(() => {
+    setData({
+      chapter: null,
+      verses: [],
+      totalPages: null,
+      error: null,
+      isLoading: false,
+    });
+    setLoadedPages([]);
+    initialVersesLoaded.current = false;
+  }, [chapterId]);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterId || isNaN(Number(chapterId))) {
@@ -81,23 +96,35 @@ const useChapterData = (chapterId: string) => {
   const fetchVerses = useCallback(
     async (page: number) => {
       if (!chapterId || isNaN(Number(chapterId))) return;
+      if (loadedPages.includes(page)) {
+        console.log(`Page ${page} already loaded.`);
+        return;
+      }
 
       setIsLoadingVerses(true);
       try {
         const res = await fetch(
-          `/api/quran/verses/by_chapter/${chapterId}?page=${page}`,
-          { cache: "no-store" }
+          `/api/quran/verses/by_chapter/${chapterId}?page=${page}&per_page=5`
         );
         if (!res.ok) throw new Error(`Verses HTTP ${res.status}`);
         const versesData = await res.json();
         if (!versesData.verses) throw new Error("Verses data not found");
 
+        const newVerses = versesData.verses.filter(
+          (newVerse: Verse) =>
+            !data.verses.some(
+              (existingVerse) => existingVerse.id === newVerse.id
+            )
+        );
+
         setData((prev) => ({
           ...prev,
-          verses: versesData.verses,
-          totalPages: versesData.pagination?.total_pages || 1,
+          verses: [...prev.verses, ...newVerses],
+          totalPages:
+            versesData.pagination?.total_pages || prev.totalPages || 1,
           error: null,
         }));
+        setLoadedPages((prev) => [...prev, page]);
       } catch (error) {
         console.error("Fetch verses error:", error);
         setData((prev) => ({
@@ -109,12 +136,20 @@ const useChapterData = (chapterId: string) => {
         setIsLoadingVerses(false);
       }
     },
-    [chapterId]
+    [chapterId, loadedPages, data.verses]
   );
 
   useEffect(() => {
     fetchChapter();
   }, [fetchChapter]);
+
+  useEffect(() => {
+    if (data.chapter && !initialVersesLoaded.current && !isLoadingVerses) {
+      console.log("Fetching initial verses (page 1)...");
+      fetchVerses(1);
+      initialVersesLoaded.current = true;
+    }
+  }, [data.chapter, fetchVerses, isLoadingVerses]);
 
   return { ...data, fetchVerses, isLoadingChapter, isLoadingVerses };
 };
@@ -131,22 +166,52 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
   } = useChapterData(chapterId);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    fetchVerses(currentPage);
+    if (currentPage > 1) {
+      fetchVerses(currentPage);
+    }
   }, [currentPage, fetchVerses]);
 
-  const goToPage = useCallback(
-    (direction: "next" | "prev") => {
-      if (!totalPages) return;
-      const newPage =
-        direction === "next"
-          ? Math.min(currentPage + 1, totalPages)
-          : Math.max(currentPage - 1, 1);
-      if (newPage !== currentPage) setCurrentPage(newPage);
-    },
-    [currentPage, totalPages]
-  );
+  useEffect(() => {
+    if (viewMode === "cards") {
+      setCurrentPage(1);
+    }
+  }, [viewMode]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const loader = loaderRef.current;
+
+    if (
+      !loader ||
+      isLoadingVerses ||
+      !totalPages ||
+      currentPage >= totalPages
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          if (currentPage < totalPages) {
+            setCurrentPage((prev) => prev + 1);
+          }
+        }
+      },
+      {
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(loader);
+
+    return () => {
+      if (loader) observer.unobserve(loader);
+    };
+  }, [isLoadingVerses, currentPage, totalPages]);
 
   if (error) {
     return (
@@ -190,7 +255,7 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
     );
   }
 
-  const showBismillah = chapter.bismillah_pre && currentPage === 1;
+  const showBismillah = chapter.bismillah_pre;
 
   return (
     <div className="flex-1 min-h-screen p-6 w-full space-y-8">
@@ -244,53 +309,32 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingVerses ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : (
+          {viewMode === "cards" ? (
             <>
               {showBismillah && (
                 <div className="text-center text-2xl arabic-text mb-6">
                   بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                 </div>
               )}
-              {viewMode === "cards" ? (
-                <CardsView
-                  pages={[{ number: currentPage, verses }]}
-                  currentPage={currentPage}
-                />
-              ) : (
-                <div className="text-center text-gray-500">
-                  Mushaf View (Coming Soon)
-                </div>
-              )}
+              <CardsView verses={verses} />
             </>
+          ) : (
+            <div className="text-center text-gray-500">
+              Mushaf View (Coming Soon)
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {totalPages && totalPages > 1 && (
-        <div className="flex justify-between items-center mt-8 p-4 bg-gray-50 rounded-lg shadow-inner">
-          <Button
-            onClick={() => goToPage("prev")}
-            disabled={currentPage === 1 || isLoadingVerses}
-            className="px-5 py-2 disabled:opacity-50"
-          >
-            <span className="mr-2">←</span> Previous
-          </Button>
-          <span className="text-md font-medium">
-            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-          </span>
-          <Button
-            onClick={() => goToPage("next")}
-            disabled={currentPage === totalPages || isLoadingVerses}
-            className="px-5 py-2 disabled:opacity-50"
-          >
-            Next <span className="ml-2">→</span>
-          </Button>
+      {viewMode === "cards" && (
+        <div ref={loaderRef} className="mt-8 w-full">
+          {isLoadingVerses && (
+            <div className="w-full space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
