@@ -94,9 +94,9 @@ const useChapterData = (chapterId: string) => {
   }, [chapterId, setIsHandling, setHeaderArabicTitle, setHeaderEnglishTitle]);
 
   const fetchVerses = useCallback(
-    async (page: number) => {
+    async (page: number, forceFetch: boolean = false) => {
       if (!chapterId || isNaN(Number(chapterId))) return;
-      if (loadedPages.includes(page)) {
+      if (loadedPages.includes(page) && !forceFetch) {
         console.log(`Page ${page} already loaded.`);
         return;
       }
@@ -132,6 +132,8 @@ const useChapterData = (chapterId: string) => {
           error: "Failed to load verses",
         }));
         toast.error("Failed to load verses");
+        // Remove failed page from loadedPages to allow retry
+        setLoadedPages((prev) => prev.filter((p) => p !== page));
       } finally {
         setIsLoadingVerses(false);
       }
@@ -202,16 +204,24 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
         }
       },
       {
-        rootMargin: "200px",
+        rootMargin: "400px", // Increased for earlier detection
       }
     );
 
     observer.observe(loader);
 
+    // Fallback: Trigger fetch if no verses after a delay
+    const timeout = setTimeout(() => {
+      if (verses.length === 0 && currentPage === 1 && !isLoadingVerses) {
+        fetchVerses(1, true); // Force fetch page 1
+      }
+    }, 2000);
+
     return () => {
       if (loader) observer.unobserve(loader);
+      clearTimeout(timeout);
     };
-  }, [isLoadingVerses, currentPage, totalPages]);
+  }, [isLoadingVerses, currentPage, totalPages, verses.length, fetchVerses]);
 
   if (error) {
     return (
@@ -224,11 +234,12 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
             <p className="text-red-500">{error}</p>
             <Button
               onClick={() => {
-                fetchVerses(currentPage);
+                fetchVerses(currentPage, true);
               }}
               className="mt-4"
+              disabled={isLoadingVerses}
             >
-              Retry
+              {isLoadingVerses ? "Loading..." : "Retry"}
             </Button>
           </CardContent>
         </Card>
@@ -238,8 +249,8 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
 
   if (isLoadingChapter || !chapter) {
     return (
-      <div className="flex-1 p-6 space-y-8">
-        <Skeleton className="h-10 w-64" />
+      <div dir="rtl" className="flex-1 p-6 space-y-8">
+        <Skeleton className="h-8 w-64" />
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -275,13 +286,13 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Card>
+      <Card dir="rtl">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl">{chapter.name_simple}</CardTitle>
+          <div className="md:flex items-center justify-between">
+            <div className="space-y-1 max-md:flex items-center justify-between">
+              <CardTitle className="text-2xl">{chapter.name_arabic}</CardTitle>
               <CardDescription className="arabic-text text-xl font-semibold">
-                {chapter.name_arabic}
+                {chapter.name_simple}
               </CardDescription>
             </div>
             <Tabs
@@ -301,7 +312,11 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
           </div>
         </CardHeader>
       </Card>
-
+      {showBismillah && (
+        <div className="text-center text-2xl arabic-text mb-6">
+          بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className={viewMode === "cards" ? "arabic-text" : ""}>
@@ -310,14 +325,7 @@ const ChapterContent = ({ chapterId }: { chapterId: string }) => {
         </CardHeader>
         <CardContent>
           {viewMode === "cards" ? (
-            <>
-              {showBismillah && (
-                <div className="text-center text-2xl arabic-text mb-6">
-                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                </div>
-              )}
-              <CardsView verses={verses} />
-            </>
+            <CardsView verses={verses} />
           ) : (
             <div className="text-center text-gray-500">
               Mushaf View (Coming Soon)
